@@ -601,6 +601,7 @@
   "Other concerns": "Other concerns",
   "Other options": "Other options",
   "Parse Link": "Parse Link",
+  "Fetch URL": "Fetch URL",
   "Parser": "Parser",
   "Parser Type": "Parser Type",
   "Parser used to process uploaded documents": "Parser used to process uploaded documents",
@@ -934,5 +935,8 @@
   "Your HTML content has been published. You can access it via the link below.": "Your HTML content has been published. You can access it via the link below.",
   "Your license has expired.": "Your license has expired.",
   "Your license has expired. You can continue using your quota pack.": "Your license has expired. You can continue using your quota pack.",
-  "Your rating on the App Store would help make Chatbox even better!": "Your rating on the App Store would help make Chatbox even better!"
+  "Your rating on the App Store would help make Chatbox even better!": "Your rating on the App Store would help make Chatbox even better!",
+  "Read Webpage Method": "Read Webpage Method",
+  "Try direct HTTP fetching first": "Try direct HTTP fetching first",
+  "When enabled, Chatbox will try to fetch webpage content directly before using the provider API. Falls back to provider if direct fetching fails. This can reduce API usage and works without a license key.": "When enabled, Chatbox will try to fetch webpage content directly before using the provider API. Falls back to provider if direct fetching fails. This can reduce API usage and works without a license key."
 }

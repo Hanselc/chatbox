@@ -666,6 +666,7 @@
   "Other concerns": "기타 걱정",
   "Other options": "기타 옵션",
   "Parse Link": "링크 분석",
+  "Fetch URL": "URL 가져오기",
   "Parser": "파서",
   "Parser Type": "파서 유형",
   "Parser used to process uploaded documents": "업로드된 문서를 처리하는 데 사용되는 파서",
@@ -1062,5 +1063,8 @@
   "Your license has expired.": "라이선스가 만료되었습니다.",
   "Your license has expired. Please check your subscription or purchase a new one.": "라이선스가 만료되었습니다. 구독을 확인하거나 새로운 라이선스를 구매하세요.",
   "Your license has expired. You can continue using your quota pack.": "라이선스가 만료되었습니다. 할당량 팩은 계속 사용하실 수 있습니다.",
-  "Your rating on the App Store would help make Chatbox even better!": "App Store에서 평점을 주시면 Chatbox을 더 나은 것으로 만들 수 있습니다!"
+  "Your rating on the App Store would help make Chatbox even better!": "App Store에서 평점을 주시면 Chatbox을 더 나은 것으로 만들 수 있습니다!",
+  "Read Webpage Method": "웹페이지 읽기 방법",
+  "Try direct HTTP fetching first": "직접 HTTP 가져오기 먼저 시도",
+  "When enabled, Chatbox will try to fetch webpage content directly before using the provider API. Falls back to provider if direct fetching fails. This can reduce API usage and works without a license key.": "활성화하면 Chatbox는 제공자 API를 사용하기 전에 웹페이지 콘텐츠를 직접 가져오려고 시도합니다. 직접 가져오기가 실패하면 제공자로 폴백됩니다. 이는 API 사용량을 줄일 수 있으며 라이선스 키 없이도 작동합니다."
 }

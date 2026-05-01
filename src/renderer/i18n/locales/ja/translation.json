@@ -666,6 +666,7 @@
   "Other concerns": "その他の問題",
   "Other options": "その他のオプション",
   "Parse Link": "リンクを解析",
+  "Fetch URL": "URLを取得",
   "Parser": "パーサー",
   "Parser Type": "パーサータイプ",
   "Parser used to process uploaded documents": "アップロードされたドキュメントを処理するパーサー",
@@ -1062,5 +1063,8 @@
   "Your license has expired.": "ライセンスの有効期限が切れました。",
   "Your license has expired. Please check your subscription or purchase a new one.": "ライセンスが期限切れです。サブスクリプションを確認するか、新しいものを購入してください。",
   "Your license has expired. You can continue using your quota pack.": "ライセンスの有効期限が切れました。クォータパックは引き続きご利用いただけます。",
-  "Your rating on the App Store would help make Chatbox even better!": "App Storeでの評価は、Chatboxをさらに良くするのに役立ちます！"
+  "Your rating on the App Store would help make Chatbox even better!": "App Storeでの評価は、Chatboxをさらに良くするのに役立ちます！",
+  "Read Webpage Method": "ウェブページ読み取り方法",
+  "Try direct HTTP fetching first": "直接 HTTP 取得を最初に試行",
+  "When enabled, Chatbox will try to fetch webpage content directly before using the provider API. Falls back to provider if direct fetching fails. This can reduce API usage and works without a license key.": "有効にすると、Chatbox はプロバイダー API を使用する前にウェブページのコンテンツを直接取得しようとします。直接取得が失敗した場合はプロバイダーにフォールバックします。これにより API の使用を削減でき、ライセンスキーなしでも動作します。"
 }

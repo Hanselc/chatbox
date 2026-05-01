@@ -43,13 +43,7 @@ function getSearchProviders() {
         throw ChatboxAIAPIError.fromCodeName('tavily_api_key_required', 'tavily_api_key_required')
       }
       selectedProviders.push(
-        new TavilySearch(
-          settings.webSearch.tavilyApiKey,
-          settings.webSearch.tavilySearchDepth,
-          settings.webSearch.tavilyMaxResults,
-          settings.webSearch.tavilyTimeRange,
-          settings.webSearch.tavilyIncludeRawContent
-        )
+        new TavilySearch(settings.webSearch.tavilyApiKey)
       )
       break
     case 'querit':

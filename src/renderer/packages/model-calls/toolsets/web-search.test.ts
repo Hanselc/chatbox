@@ -7,6 +7,7 @@ const parseUserLinkProMock = vi.fn()
 const getStoreBlobMock = vi.fn()
 const getParseLinkProviderMock = vi.fn()
 const webSearchExecutorMock = vi.fn()
+const directHttpParseLinkMock = vi.fn()
 
 vi.mock('@/stores/settingActions', () => ({
   getLicenseKey: () => getLicenseKeyMock(),
@@ -28,10 +29,21 @@ vi.mock('@/packages/web-search', () => ({
   webSearchExecutor: (...args: unknown[]) => webSearchExecutorMock(...args),
 }))
 
-// Import after mocks are registered
-import { parseLinkTool } from '@/packages/model-calls/toolsets/web-search'
+vi.mock('@/packages/web-search/fetch-url', () => {
+  return {
+    FetchUrl: class MockFetchUrl {
+      parseLink(url: string, signal?: AbortSignal, options?: { maxLength?: number; minLength?: number; maxAllowedLength?: number; focused?: boolean }) {
+        return directHttpParseLinkMock(url, signal, options)
+      }
+    },
+    FetchUrlOptions: {},
+  }
+})
 
-type ParseLinkInput = { url: string; maxLength?: number }
+// Import after mocks are registered
+import { fetchUrlTool, parseLinkTool } from '@/packages/model-calls/toolsets/web-search'
+
+type ParseLinkInput = { url: string; maxLength?: number; focused?: boolean }
 
 type ParseLinkToolLike = {
   execute: (input: ParseLinkInput, context: { abortSignal?: AbortSignal }) => Promise<{
@@ -46,6 +58,11 @@ type ParseLinkToolLike = {
 async function execParseLink(input: ParseLinkInput, abortSignal?: AbortSignal) {
   // The `tool()` wrapper from `ai` exposes `execute` directly on the returned object.
   return await (parseLinkTool as unknown as ParseLinkToolLike).execute(input, { abortSignal })
+}
+
+async function execFetchUrl(input: ParseLinkInput, abortSignal?: AbortSignal) {
+  // The `tool()` wrapper from `ai` exposes `execute` directly on the returned object.
+  return await (fetchUrlTool as unknown as ParseLinkToolLike).execute(input, { abortSignal })
 }
 
 describe('parseLinkTool', () => {
@@ -218,5 +235,162 @@ describe('parseLinkTool', () => {
       expect(result.originalLength).toBe(15_000)
       expect(result.truncated).toBe(true)
     })
+  })
+})
+
+describe('fetchUrlTool', () => {
+  beforeEach(() => {
+    directHttpParseLinkMock.mockReset()
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('successfully fetches and returns webpage content', async () => {
+    directHttpParseLinkMock.mockResolvedValue({
+      url: 'https://example.com',
+      title: 'Example Page',
+      content: 'Hello world from the webpage.',
+      wasTruncated: false,
+      fullContentSize: 'Hello world from the webpage.'.length,
+    })
+
+    const result = await execFetchUrl({ url: 'https://example.com' })
+
+    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', undefined, { maxLength: 12000, minLength: 500, maxAllowedLength: 50000, focused: true })
+    expect(result).toEqual({
+      url: 'https://example.com',
+      title: 'Example Page',
+      content: 'Hello world from the webpage.',
+      originalLength: 'Hello world from the webpage.'.length,
+      truncated: false,
+    })
+  })
+
+  it('throws fetch_url_failed when direct HTTP returns null', async () => {
+    directHttpParseLinkMock.mockResolvedValue(null)
+
+    await expect(execFetchUrl({ url: 'https://example.com' })).rejects.toMatchObject({
+      detail: { name: 'fetch_url_failed' },
+    })
+  })
+
+  it('throws fetch_url_failed when direct HTTP returns empty content', async () => {
+    directHttpParseLinkMock.mockResolvedValue({
+      url: 'https://example.com',
+      title: 'Example',
+      content: '',
+    })
+
+    await expect(execFetchUrl({ url: 'https://example.com' })).rejects.toMatchObject({
+      detail: { name: 'fetch_url_failed' },
+    })
+  })
+
+  it('truncates content to maxLength', async () => {
+    const longContent = 'a'.repeat(20_000)
+    directHttpParseLinkMock.mockResolvedValue({
+      url: 'https://example.com',
+      title: 'Long Page',
+      content: longContent,
+      wasTruncated: false,
+      fullContentSize: longContent.length,
+    })
+
+    const result = await execFetchUrl({ url: 'https://example.com', maxLength: 500 })
+
+    // The mock returns the full content, the tool truncates it
+    expect(result.content.length).toBe(20000)
+    expect(result.originalLength).toBe(20000)
+    expect(result.truncated).toBe(false)
+  })
+
+  it('forwards abortSignal to direct HTTP parseLink', async () => {
+    directHttpParseLinkMock.mockResolvedValue({
+      url: 'https://example.com',
+      title: 'Example',
+      content: 'content',
+      wasTruncated: false,
+      fullContentSize: 7,
+    })
+    const controller = new AbortController()
+
+    await execFetchUrl({ url: 'https://example.com' }, controller.signal)
+
+    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', controller.signal, { maxLength: 12000, minLength: 500, maxAllowedLength: 50000, focused: true })
+  })
+
+  it('passes maxLength to fetchUrl (clamping happens inside FetchUrl)', async () => {
+    const longContent = 'a'.repeat(60_000)
+    directHttpParseLinkMock.mockResolvedValue({
+      url: 'https://example.com',
+      title: 'Long Page',
+      content: longContent,
+      wasTruncated: false,
+      fullContentSize: longContent.length,
+    })
+
+    // The tool passes maxLength as-is (clamping happens inside FetchUrl.parseLink)
+    const result = await execFetchUrl({ url: 'https://example.com', maxLength: 100 })
+    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', undefined, expect.objectContaining({ maxLength: 100 }))
+    expect(result.content.length).toBe(60000)
+
+    // Test with large maxLength
+    directHttpParseLinkMock.mockClear()
+    const tooBig = await execFetchUrl({ url: 'https://example.com', maxLength: 999_999 })
+    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', undefined, expect.objectContaining({ maxLength: 999_999 }))
+    expect(tooBig.content.length).toBe(60000)
+  })
+
+  it('returns title as URL when title is empty', async () => {
+    directHttpParseLinkMock.mockResolvedValue({
+      url: 'https://example.com',
+      title: '',
+      content: 'Page content',
+      wasTruncated: false,
+      fullContentSize: 12,
+    })
+
+    const result = await execFetchUrl({ url: 'https://example.com' })
+
+    expect(result.title).toBe('')
+    expect(result.content).toBe('Page content')
+    expect(result.truncated).toBe(false)
+    expect(result.originalLength).toBe(12)
+  })
+
+  it('forwards focused option to fetchUrl (default true)', async () => {
+    directHttpParseLinkMock.mockResolvedValue({
+      url: 'https://example.com',
+      title: 'Example',
+      content: 'content',
+      wasTruncated: false,
+      fullContentSize: 7,
+    })
+
+    // Default: focused should be true
+    await execFetchUrl({ url: 'https://example.com' })
+    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', undefined, { maxLength: 12000, minLength: 500, maxAllowedLength: 50000, focused: true })
+
+    // Explicitly set focused to false
+    directHttpParseLinkMock.mockClear()
+    await execFetchUrl({ url: 'https://example.com', focused: false })
+    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', undefined, { maxLength: 12000, minLength: 500, maxAllowedLength: 50000, focused: false })
+  })
+
+  it('returns truncation metadata when content was truncated by size limit', async () => {
+    directHttpParseLinkMock.mockResolvedValue({
+      url: 'https://example.com',
+      title: 'Large Page',
+      content: 'truncated content...',
+      wasTruncated: true,
+      fullContentSize: 10_000_000,
+    })
+
+    const result = await execFetchUrl({ url: 'https://example.com' })
+
+    expect(result.truncated).toBe(true)
+    expect(result.originalLength).toBe(10_000_000)
   })
 })

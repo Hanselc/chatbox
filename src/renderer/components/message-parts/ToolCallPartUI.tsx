@@ -80,7 +80,8 @@ const toolIconMap: Record<string, React.ElementType> = {
   code_search: IconFileSearch,
   file_search: IconFileSearch,
   query_knowledge_base: IconDatabase,
-  parse_link: IconExternalLink,
+  parse_link: IconWorld,
+  fetch_url: IconWorld,
   create_file: IconFile,
   edit_file: IconEdit,
   delete_file: IconFileMinus,
@@ -489,7 +490,7 @@ export const ToolCallPartUI: FC<{ part: MessageToolCallPart }> = ({ part }) => {
   if (part.toolName === 'web_search') {
     return <WebSearchGroupUI parts={[part]} />
   }
-  if (part.toolName === 'parse_link') {
+  if (part.toolName === 'parse_link' || part.toolName === 'fetch_url') {
     return <ParseLinkUI part={part} />
   }
   return <GeneralToolCallUI part={part} />
