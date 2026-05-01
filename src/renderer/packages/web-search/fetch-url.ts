@@ -2,9 +2,11 @@ import { CapacitorHttp } from '@capacitor/core'
 import platform from '@/platform'
 import type { ParseLinkResult } from './base'
 import type TurndownService from 'turndown'
+import type { Readability as ReadabilityType } from '@mozilla/readability'
 
 // Dependencies for HTML parsing
 let TurndownServiceClass: typeof TurndownService | null = null
+let ReadabilityClass: typeof ReadabilityType | null = null
 
 async function getTurndownService(): Promise<typeof TurndownService> {
   if (!TurndownServiceClass) {
@@ -12,6 +14,14 @@ async function getTurndownService(): Promise<typeof TurndownService> {
     TurndownServiceClass = module.default
   }
   return TurndownServiceClass
+}
+
+async function getReadability(): Promise<typeof ReadabilityType> {
+  if (!ReadabilityClass) {
+    const module = await import('@mozilla/readability')
+    ReadabilityClass = module.Readability
+  }
+  return ReadabilityClass
 }
 
 const DEFAULT_TIMEOUT = 30 * 1000 // 30 seconds
@@ -34,8 +44,11 @@ interface FetchResponse {
   contentType: string | null
 }
 
-export interface ParseLinkOptions {
-  allowTruncation?: boolean
+export interface FetchUrlOptions {
+  maxLength?: number
+  minLength?: number
+  maxAllowedLength?: number
+  focused?: boolean
 }
 
 /**
@@ -46,9 +59,13 @@ export interface ParseLinkOptions {
  * - JSON/XML/Text: Returns raw content
  * - Binary: Rejected
  */
-export class DirectHttpParseLink {
-  async parseLink(url: string, signal?: AbortSignal, options?: ParseLinkOptions): Promise<ParseLinkResult | null> {
-    const allowTruncation = options?.allowTruncation ?? true
+export class FetchUrl {
+  async parseLink(url: string, signal?: AbortSignal, options?: FetchUrlOptions): Promise<ParseLinkResult | null> {
+    const maxLength = options?.maxLength ?? 12000
+    const minLength = options?.minLength ?? 500
+    const maxAllowedLength = options?.maxAllowedLength ?? 50000
+    const focused = options?.focused ?? true
+    const normalizedMaxLength = Math.min(Math.max(maxLength, minLength), maxAllowedLength)
     try {
       // Validate URL
       const urlObj = new URL(url)
@@ -72,18 +89,6 @@ export class DirectHttpParseLink {
       // Detect content type
       const category = this.getContentCategory(response.contentType)
 
-      // Check size limit
-      const sizeLimit = SIZE_LIMITS[category]
-      const fullContentSize = response.content.length
-      let shouldTruncate = false
-
-      if (!allowTruncation && sizeLimit > 0 && fullContentSize > sizeLimit) {
-        console.warn(`DirectHttpParseLink: Response too large for ${category} (${fullContentSize} bytes), but allowTruncation=false, proceeding with full content`)
-      } else if (allowTruncation && sizeLimit > 0 && fullContentSize > sizeLimit) {
-        console.warn(`DirectHttpParseLink: Response too large for ${category} (${fullContentSize} bytes), will truncate`)
-        shouldTruncate = true
-      }
-
       // Reject binary content
       if (category === 'binary') {
         console.warn(`DirectHttpParseLink: Binary content not supported (${response.contentType})`)
@@ -93,17 +98,17 @@ export class DirectHttpParseLink {
       // Process based on content type
       switch (category) {
         case 'html':
-          return this.processHtml(response.content, url, shouldTruncate, sizeLimit, fullContentSize)
+          return this.processHtml(response.content, url, normalizedMaxLength, focused)
         case 'json':
         case 'xml':
         case 'text':
-          return this.processRawText(response.content, url, shouldTruncate, sizeLimit, fullContentSize)
+          return this.processRawText(response.content, url, normalizedMaxLength)
         default:
           // Unknown type - check if it looks like HTML
           if (this.looksLikeHtml(response.content)) {
-            return this.processHtml(response.content, url, shouldTruncate, sizeLimit, fullContentSize)
+            return this.processHtml(response.content, url, normalizedMaxLength, focused)
           }
-          return this.processRawText(response.content, url, shouldTruncate, sizeLimit, fullContentSize)
+          return this.processRawText(response.content, url, normalizedMaxLength)
       }
     } catch (error) {
       console.warn('DirectHttpParseLink failed:', error)
@@ -130,9 +135,9 @@ export class DirectHttpParseLink {
     const start = trimmed.slice(0, 500)
     const startLower = start.toLowerCase()
     if (startLower.includes('<!doctype html') ||
-        startLower.includes('<html') ||
-        startLower.includes('<head') ||
-        startLower.includes('<body')) {
+      startLower.includes('<html') ||
+      startLower.includes('<head') ||
+      startLower.includes('<body')) {
       return true
     }
     return false
@@ -159,31 +164,32 @@ export class DirectHttpParseLink {
     }
   }
 
-  private async processHtml(html: string, url: string, shouldTruncate: boolean, sizeLimit: number, fullContentSize: number): Promise<ParseLinkResult> {
-    const content = await this.parseHtml(html, url, shouldTruncate, sizeLimit, fullContentSize)
+  private async processHtml(html: string, url: string, maxLength: number, focused: boolean): Promise<ParseLinkResult> {
+    const result = await this.parseHtml(html, url, maxLength, focused)
     return {
       url,
       title: this.extractTitleFromUrl(url),
-      content: content || '',
-      wasTruncated: shouldTruncate,
-      fullContentSize,
+      content: result.content || '',
+      fullContentSize: result.fullContentSize,
+      wasTruncated: result.wasTruncated,
     }
   }
 
-  private processRawText(content: string, url: string, shouldTruncate: boolean, sizeLimit: number, fullContentSize: number): ParseLinkResult {
+  private processRawText(content: string, url: string, maxLength: number): ParseLinkResult {
     let processedContent = content
+    let wasTruncated = false
 
-    if (shouldTruncate && sizeLimit > 0) {
-      processedContent = content.slice(0, sizeLimit)
-      processedContent += '\n\n[Content truncated - ' + (fullContentSize - sizeLimit) + ' bytes remaining. To retrieve full content, call fetch_url with allowTruncation=false]'
+    if (maxLength > 0 && content.length > maxLength) {
+      processedContent = content.slice(0, maxLength)
+      wasTruncated = true
     }
 
     return {
       url,
       title: this.extractTitleFromUrl(url),
       content: processedContent,
-      wasTruncated: shouldTruncate,
-      fullContentSize,
+      fullContentSize: content.length,
+      wasTruncated: wasTruncated,
     }
   }
 
@@ -240,7 +246,10 @@ export class DirectHttpParseLink {
     }
   }
 
-  private async parseHtml(html: string, _url: string, shouldTruncate: boolean, sizeLimit: number, fullContentSize: number): Promise<string> {
+  private async parseHtml(html: string, url: string, maxLength: number, focused: boolean): Promise<{ content: string; fullContentSize: number; wasTruncated: boolean }> {
+    // If focused mode is enabled, extract main content using Readability
+    const htmlToProcess = focused ? await this.extractMainContent(html, url) : html
+
     // Convert to Markdown using Turndown
     const TurndownService = await getTurndownService()
     const turndownService = new TurndownService({
@@ -255,6 +264,15 @@ export class DirectHttpParseLink {
 
     // Remove unwanted elements
     turndownService.remove(['head', 'script', 'style', 'noscript'])
+
+    // Override link handling to strip title attributes (cleaner markdown)
+    turndownService.addRule('links', {
+      filter: 'a',
+      replacement: (content: string, node: Node) => {
+        const href = (node as HTMLAnchorElement).getAttribute('href') || ''
+        return href ? `[${content}](${href})` : content
+      },
+    })
 
     turndownService.addRule('canvas', {
       filter: 'canvas',
@@ -319,18 +337,52 @@ export class DirectHttpParseLink {
       },
     })
 
-    // Convert full HTML to markdown
-    let markdown = turndownService.turndown(html)
-    console.log(`Markdown: ${markdown}`)
-    console.log(`Should truncate: ${shouldTruncate}`)
-    
+    // Convert HTML to markdown
+    let markdown = turndownService.turndown(htmlToProcess)
+    const fullContentSize = markdown.length
+    let wasTruncated = false
+
     // Truncate markdown if needed (after conversion)
-    if (shouldTruncate && sizeLimit > 0 && markdown.length > sizeLimit) {
-      markdown = this.truncateAtBoundary(markdown, sizeLimit)
-      markdown += '\n\n[Content truncated - ' + (fullContentSize - sizeLimit) + ' bytes remaining. To retrieve full content, call fetch_url with allowTruncation=false]'
+    if (maxLength > 0 && markdown.length > maxLength) {
+      markdown = this.truncateAtBoundary(markdown, maxLength)
+      markdown += '\n\n[Content truncated. To retrieve more content, call fetch_url with a higher maxLength]'
+      wasTruncated = true
     }
 
-    return markdown
+    return { content: markdown, fullContentSize, wasTruncated }
+  }
+
+  private async extractMainContent(html: string, url: string): Promise<string> {
+    try {
+      const Readability = await getReadability()
+      const parser = new DOMParser()
+
+      // Inject a <base> tag to ensure relative URLs are resolved correctly
+      // This prevents URLs from being resolved against localhost
+      let htmlWithBase = html
+      if (url) {
+        const baseTag = `<base href="${url}">`
+        if (html.includes('<head>')) {
+          htmlWithBase = html.replace(/<head>/i, `<head>${baseTag}`)
+        } else if (html.includes('<html>')) {
+          htmlWithBase = html.replace(/<html>/i, `<html><head>${baseTag}</head>`)
+        } else {
+          htmlWithBase = baseTag + html
+        }
+      }
+
+      const doc = parser.parseFromString(htmlWithBase, 'text/html')
+      const reader = new Readability(doc)
+      const article = reader.parse()
+
+      if (article && article.content) {
+        return article.content
+      }
+      return html
+    } catch (error) {
+      console.warn('Readability extraction failed, falling back to full HTML:', error)
+      return html
+    }
   }
 
   private truncateAtBoundary(text: string, maxLength: number): string {
@@ -363,4 +415,4 @@ export class DirectHttpParseLink {
   }
 }
 
-export default DirectHttpParseLink
+export default FetchUrl

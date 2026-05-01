@@ -2,13 +2,13 @@ import { ChatboxAIAPIError } from '@shared/models/errors'
 import { tool } from 'ai'
 import z from 'zod'
 import * as remote from '@/packages/remote'
-import { DirectHttpParseLink } from '@/packages/web-search/direct-http'
+import { FetchUrl } from '@/packages/web-search/fetch-url'
 import { getParseLinkProvider, webSearchExecutor } from '@/packages/web-search'
 import platform from '@/platform'
 import * as settingActions from '@/stores/settingActions'
 
 // Singleton instance for direct HTTP parse link
-const directHttpParseLink = new DirectHttpParseLink()
+const fetchUrl = new FetchUrl()
 
 const toolSetDescription = `
 Use these tools to search the web and extract content from URLs.
@@ -48,18 +48,22 @@ export const fetchUrlTool = tool({
       .max(50_000)
       .optional()
       .describe('Optional maximum number of characters to return from the fetched content.'),
-    allowTruncation: z
+    focused: z
       .boolean()
       .optional()
       .default(true)
-      .describe('Set to false to retrieve full content without size limits (may return very large responses).'),
+      .describe('When true (default), extracts only the main content of the page using content detection. Set to false to retrieve the full page content including navigation, sidebars, and footers.'),
   }),
-  execute: async (input: { url: string; maxLength?: number; allowTruncation?: boolean }, { abortSignal }: { abortSignal?: AbortSignal }) => {
+  execute: async (input: { url: string; maxLength?: number; focused?: boolean }, { abortSignal }: { abortSignal?: AbortSignal }) => {
     const maxLength = input.maxLength ?? DEFAULT_PARSE_LINK_MAX_CHARS
-    const normalizedMaxLength = Math.min(Math.max(maxLength, 500), 50_000)
-    const allowTruncation = input.allowTruncation ?? true
+    const focused = input.focused ?? true
 
-    const result = await directHttpParseLink.parseLink(input.url, abortSignal, { allowTruncation })
+    const result = await fetchUrl.parseLink(input.url, abortSignal, {
+      maxLength,
+      minLength: 500,
+      maxAllowedLength: 50000,
+      focused,
+    })
     if (!result || !result.content) {
       throw ChatboxAIAPIError.fromCodeName(
         'Failed to fetch URL directly. The site may have bot protection or require JavaScript.',
@@ -67,15 +71,12 @@ export const fetchUrlTool = tool({
       ) ?? new Error('Failed to fetch URL directly')
     }
 
-    const truncatedContent = result.content.slice(0, normalizedMaxLength)
     return {
       url: input.url,
       title: result.title,
-      content: truncatedContent,
-      originalLength: result.content.length,
-      truncated: result.content.length > truncatedContent.length,
-      wasTruncatedBySizeLimit: result.wasTruncated ?? false,
-      fullContentSize: result.fullContentSize ?? result.content.length,
+      content: result.content,
+      originalLength: result.fullContentSize ?? result.content.length,
+      truncated: result.wasTruncated ?? false,
     }
   },
 })
