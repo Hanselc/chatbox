@@ -127,6 +127,7 @@ export function settings(): Settings {
         tavilyApiKey: '',
         bochaApiKey: '',
         useDirectHttpForParseLink: false,
+        lastWebBrowsingEnabled: undefined,
       },
       knowledgeBase: {
         models: {
