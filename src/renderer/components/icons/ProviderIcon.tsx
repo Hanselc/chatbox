@@ -1,7 +1,28 @@
 import { type ModelProvider, ModelProviderEnum } from '@shared/types';
+import QwenColor from '@lobehub/icons/es/Qwen/components/Color'
+import MinimaxColor from '@lobehub/icons/es/Minimax/components/Color'
+import MoonshotMono from '@lobehub/icons/es/Moonshot/components/Mono'
+import GithubCopilotMono from '@lobehub/icons/es/GithubCopilot/components/Mono'
 
 export default function ProviderIcon(props: { className?: string; size?: number; provider: ModelProvider | string }) {
   const { className, size = 24, provider } = props
+
+  // Use @lobehub/icons for providers that have them
+  if (provider === ModelProviderEnum.Qwen || provider === ModelProviderEnum.QwenPortal) {
+    return <QwenColor size={size} className={className} />
+  }
+
+  if (provider === ModelProviderEnum.MiniMax || provider === ModelProviderEnum.MiniMaxCN) {
+    return <MinimaxColor size={size} className={className} />
+  }
+
+  if (provider === ModelProviderEnum.Moonshot || provider === ModelProviderEnum.MoonshotCN) {
+    return <MoonshotMono size={size} className={className} />
+  }
+
+  if (provider === 'github-copilot') {
+    return <GithubCopilotMono size={size} className={className} />
+  }
 
   return (
     <svg
