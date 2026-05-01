@@ -7,6 +7,8 @@ export interface ParseLinkResult {
   url: string
   title: string
   content: string
+  wasTruncated?: boolean
+  fullContentSize?: number
 }
 
 abstract class WebSearch {

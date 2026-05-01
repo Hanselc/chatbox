@@ -48,12 +48,18 @@ export const fetchUrlTool = tool({
       .max(50_000)
       .optional()
       .describe('Optional maximum number of characters to return from the fetched content.'),
+    allowTruncation: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe('Set to false to retrieve full content without size limits (may return very large responses).'),
   }),
-  execute: async (input: { url: string; maxLength?: number }, { abortSignal }: { abortSignal?: AbortSignal }) => {
+  execute: async (input: { url: string; maxLength?: number; allowTruncation?: boolean }, { abortSignal }: { abortSignal?: AbortSignal }) => {
     const maxLength = input.maxLength ?? DEFAULT_PARSE_LINK_MAX_CHARS
     const normalizedMaxLength = Math.min(Math.max(maxLength, 500), 50_000)
+    const allowTruncation = input.allowTruncation ?? true
 
-    const result = await directHttpParseLink.parseLink(input.url, abortSignal)
+    const result = await directHttpParseLink.parseLink(input.url, abortSignal, { allowTruncation })
     if (!result || !result.content) {
       throw ChatboxAIAPIError.fromCodeName(
         'Failed to fetch URL directly. The site may have bot protection or require JavaScript.',
@@ -68,6 +74,8 @@ export const fetchUrlTool = tool({
       content: truncatedContent,
       originalLength: result.content.length,
       truncated: result.content.length > truncatedContent.length,
+      wasTruncatedBySizeLimit: result.wasTruncated ?? false,
+      fullContentSize: result.fullContentSize ?? result.content.length,
     }
   },
 })

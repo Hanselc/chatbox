@@ -32,17 +32,18 @@ vi.mock('@/packages/web-search', () => ({
 vi.mock('@/packages/web-search/direct-http', () => {
   return {
     DirectHttpParseLink: class MockDirectHttpParseLink {
-      parseLink(...args: unknown[]) {
-        return directHttpParseLinkMock(...args)
+      parseLink(url: string, signal?: AbortSignal, options?: { allowTruncation?: boolean }) {
+        return directHttpParseLinkMock(url, signal, options)
       }
     },
+    ParseLinkOptions: {},
   }
 })
 
 // Import after mocks are registered
 import { fetchUrlTool, parseLinkTool } from '@/packages/model-calls/toolsets/web-search'
 
-type ParseLinkInput = { url: string; maxLength?: number }
+type ParseLinkInput = { url: string; maxLength?: number; allowTruncation?: boolean }
 
 type ParseLinkToolLike = {
   execute: (input: ParseLinkInput, context: { abortSignal?: AbortSignal }) => Promise<{
@@ -51,6 +52,8 @@ type ParseLinkToolLike = {
     content: string
     originalLength: number
     truncated: boolean
+    wasTruncatedBySizeLimit?: boolean
+    fullContentSize?: number
   }>
 }
 
@@ -251,17 +254,21 @@ describe('fetchUrlTool', () => {
       url: 'https://example.com',
       title: 'Example Page',
       content: 'Hello world from the webpage.',
+      wasTruncated: false,
+      fullContentSize: 'Hello world from the webpage.'.length,
     })
 
     const result = await execFetchUrl({ url: 'https://example.com' })
 
-    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', undefined)
+    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', undefined, { allowTruncation: true })
     expect(result).toEqual({
       url: 'https://example.com',
       title: 'Example Page',
       content: 'Hello world from the webpage.',
       originalLength: 'Hello world from the webpage.'.length,
       truncated: false,
+      wasTruncatedBySizeLimit: false,
+      fullContentSize: 'Hello world from the webpage.'.length,
     })
   })
 
@@ -291,6 +298,8 @@ describe('fetchUrlTool', () => {
       url: 'https://example.com',
       title: 'Long Page',
       content: longContent,
+      wasTruncated: false,
+      fullContentSize: longContent.length,
     })
 
     const result = await execFetchUrl({ url: 'https://example.com', maxLength: 500 })
@@ -298,6 +307,8 @@ describe('fetchUrlTool', () => {
     expect(result.content.length).toBe(500)
     expect(result.originalLength).toBe(20_000)
     expect(result.truncated).toBe(true)
+    expect(result.wasTruncatedBySizeLimit).toBe(false)
+    expect(result.fullContentSize).toBe(20_000)
   })
 
   it('forwards abortSignal to direct HTTP parseLink', async () => {
@@ -305,12 +316,14 @@ describe('fetchUrlTool', () => {
       url: 'https://example.com',
       title: 'Example',
       content: 'content',
+      wasTruncated: false,
+      fullContentSize: 7,
     })
     const controller = new AbortController()
 
     await execFetchUrl({ url: 'https://example.com' }, controller.signal)
 
-    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', controller.signal)
+    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', controller.signal, { allowTruncation: true })
   })
 
   it('clamps maxLength below minimum (500) and above maximum (50000)', async () => {
@@ -319,6 +332,8 @@ describe('fetchUrlTool', () => {
       url: 'https://example.com',
       title: 'Long Page',
       content: longContent,
+      wasTruncated: false,
+      fullContentSize: longContent.length,
     })
 
     // Below min: 100 should clamp to 500
@@ -335,11 +350,44 @@ describe('fetchUrlTool', () => {
       url: 'https://example.com',
       title: '',
       content: 'Page content',
+      wasTruncated: false,
+      fullContentSize: 12,
     })
 
     const result = await execFetchUrl({ url: 'https://example.com' })
 
     expect(result.title).toBe('')
     expect(result.content).toBe('Page content')
+    expect(result.wasTruncatedBySizeLimit).toBe(false)
+    expect(result.fullContentSize).toBe(12)
+  })
+
+  it('forwards allowTruncation option to direct HTTP parseLink', async () => {
+    directHttpParseLinkMock.mockResolvedValue({
+      url: 'https://example.com',
+      title: 'Example',
+      content: 'content',
+      wasTruncated: false,
+      fullContentSize: 7,
+    })
+
+    await execFetchUrl({ url: 'https://example.com', allowTruncation: false })
+
+    expect(directHttpParseLinkMock).toHaveBeenCalledWith('https://example.com', undefined, { allowTruncation: false })
+  })
+
+  it('returns truncation metadata when content was truncated by size limit', async () => {
+    directHttpParseLinkMock.mockResolvedValue({
+      url: 'https://example.com',
+      title: 'Large Page',
+      content: 'truncated content...',
+      wasTruncated: true,
+      fullContentSize: 10_000_000,
+    })
+
+    const result = await execFetchUrl({ url: 'https://example.com' })
+
+    expect(result.wasTruncatedBySizeLimit).toBe(true)
+    expect(result.fullContentSize).toBe(10_000_000)
   })
 })
