@@ -25,6 +25,8 @@ export const PROVIDER_ID_MAP: Record<string, string> = {
   'chatglm-6b': 'zhipuai',
   qwen: 'alibaba',
   'qwen-portal': 'alibaba',
+  'opencode-zen': 'opencode',
+  'opencode-go': 'opencode',
 }
 
 /** Reverse mapping: models.dev provider ID -> Chatbox provider IDs */

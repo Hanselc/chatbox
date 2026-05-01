@@ -26,6 +26,8 @@ export enum ModelProviderEnum {
   XAI = 'xAI',
   OpenRouter = 'openrouter',
   Bedrock = 'bedrock',
+  OpenCodeZen = 'opencode-zen',
+  OpenCodeGo = 'opencode-go',
   Custom = 'custom',
 }
 
