@@ -666,6 +666,7 @@
   "Other concerns": "Övriga problem",
   "Other options": "Andra alternativ",
   "Parse Link": "Analysera länk",
+  "Fetch URL": "Hämta URL",
   "Parser": "Parser",
   "Parser Type": "Parsertyp",
   "Parser used to process uploaded documents": "Parser som används för att bearbeta uppladdade dokument",
@@ -1062,5 +1063,8 @@
   "Your license has expired.": "Din licens har gått ut.",
   "Your license has expired. Please check your subscription or purchase a new one.": "Din licens har gått ut. Vänligen kontrollera din prenumeration eller köp en ny.",
   "Your license has expired. You can continue using your quota pack.": "Din licens har gått ut. Du kan fortsätta använda ditt kvotpaket.",
-  "Your rating on the App Store would help make Chatbox even better!": "Din betyg på App Store hjälper till att göra Chatbox ännu bättre!"
+  "Your rating on the App Store would help make Chatbox even better!": "Din betyg på App Store hjälper till att göra Chatbox ännu bättre!",
+  "Read Webpage Method": "Metod för att läsa webbsidor",
+  "Try direct HTTP fetching first": "Försök med direkt HTTP-hämtning först",
+  "When enabled, Chatbox will try to fetch webpage content directly before using the provider API. Falls back to provider if direct fetching fails. This can reduce API usage and works without a license key.": "När aktiverad kommer Chatbox att försöka hämta webbsideinnehåll direkt innan leverantörens API används. Återgår till leverantör om direkt hämtning misslyckas. Detta kan minska API-användning och fungerar utan licensnyckel."
 }

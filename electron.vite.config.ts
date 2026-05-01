@@ -303,7 +303,7 @@ export default defineConfig(({ mode }) => {
         'process.env.USE_BETA_CHATBOX': JSON.stringify(process.env.USE_BETA_CHATBOX || ''),
       },
       optimizeDeps: {
-        include: ['mermaid'],
+        include: ['mermaid', 'turndown'],
         esbuildOptions: {
           target: 'es2015',
         },

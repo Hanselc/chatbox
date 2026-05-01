@@ -1,4 +1,4 @@
-import { Button, Flex, PasswordInput, Select, Stack, Text, Title, Tooltip } from '@mantine/core'
+import { Button, Flex, PasswordInput, Select, Stack, Switch, Text, Title, Tooltip } from '@mantine/core'
 import { IconCheck, IconX } from '@tabler/icons-react'
 import { createFileRoute } from '@tanstack/react-router'
 import { ofetch } from 'ofetch'
@@ -406,6 +406,30 @@ export function RouteComponent() {
           </Stack>
         </Stack>
       )}
+      {/* Direct HTTP Parse Link Toggle */}
+      <Stack gap="xs">
+        <Text size="sm" fw={500}>
+          {t('Read Webpage Method')}
+        </Text>
+        <Switch
+          label={t('Try direct HTTP fetching first')}
+          description={t(
+            'When enabled, Chatbox will try to fetch webpage content directly before using the provider API. Falls back to provider if direct fetching fails. This can reduce API usage and works without a license key.'
+          )}
+          checked={extension.webSearch.useDirectHttpForParseLink}
+          onChange={(e) =>
+            setSettings({
+              extension: {
+                ...extension,
+                webSearch: {
+                  ...extension.webSearch,
+                  useDirectHttpForParseLink: e.currentTarget.checked,
+                },
+              },
+            })
+          }
+        />
+      </Stack>
       {extension.webSearch.provider !== 'build-in' && !licenseKey && (
         <Tooltip
           label={t(

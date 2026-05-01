@@ -35,7 +35,8 @@ import {
 } from './tools'
 import fileToolSet from './toolsets/file'
 import { getToolSet } from './toolsets/knowledge-base'
-import websearchToolSet, { parseLinkTool, webSearchTool } from './toolsets/web-search'
+import websearchToolSet, { fetchUrlTool, parseLinkTool, webSearchTool } from './toolsets/web-search'
+import { PROVIDERS_WITH_PARSE_LINK } from '../web-search'
 
 /**
  * 处理搜索结果并返回模型响应的通用函数
@@ -298,7 +299,15 @@ export async function streamText(
     }
     if (webBrowsing) {
       tools.web_search = webSearchTool
-      if (settingActions.isPro()) {
+      const extensionSettings = settingActions.getExtensionSettings()
+      const searchProvider = extensionSettings.webSearch.provider
+      const useDirectHttp = extensionSettings.webSearch.useDirectHttpForParseLink
+
+      if (useDirectHttp) {
+        tools.fetch_url = fetchUrlTool
+      }
+
+      if (PROVIDERS_WITH_PARSE_LINK.has(searchProvider)) {
         tools.parse_link = parseLinkTool
       }
     }

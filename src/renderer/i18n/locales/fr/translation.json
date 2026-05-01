@@ -666,6 +666,7 @@
   "Other concerns": "Autres préoccupations",
   "Other options": "Autres options",
   "Parse Link": "Analyser le lien",
+  "Fetch URL": "Récupérer l'URL",
   "Parser": "THOUGHT: The user wants to translate the word \"Parser\" from English to French. This is a technical term used in the context of software and data processing.\n\nThe most direct and commonly used translation for \"parser\" in French, especially in a technical context, is \"analyseur\".Analyseur",
   "Parser Type": "Type d'analyseur",
   "Parser used to process uploaded documents": "Parseur utilisé pour traiter les documents téléchargés",
@@ -1062,5 +1063,8 @@
   "Your license has expired.": "Votre licence a expiré.",
   "Your license has expired. Please check your subscription or purchase a new one.": "Votre licence a expiré. Veuillez vérifier votre abonnement ou en acheter un nouveau.",
   "Your license has expired. You can continue using your quota pack.": "Votre licence a expiré. Vous pouvez continuer à utiliser votre pack de quota.",
-  "Your rating on the App Store would help make Chatbox even better!": "Votre note sur l'App Store aidera à rendre Chatbox encore meilleur!"
+  "Your rating on the App Store would help make Chatbox even better!": "Votre note sur l'App Store aidera à rendre Chatbox encore meilleur!",
+  "Read Webpage Method": "Méthode de Lecture de Page Web",
+  "Try direct HTTP fetching first": "Essayer d'abord la récupération HTTP directe",
+  "When enabled, Chatbox will try to fetch webpage content directly before using the provider API. Falls back to provider if direct fetching fails. This can reduce API usage and works without a license key.": "Lorsqu'activé, Chatbox essaiera de récupérer le contenu de la page web directement avant d'utiliser l'API du fournisseur. Revient au fournisseur si la récupération directe échoue. Cela peut réduire l'utilisation de l'API et fonctionne sans clé de licence."
 }
