@@ -225,6 +225,7 @@ const ExtensionSettingsSchema = z.object({
     queritApiKey: z.string().optional(),
     queritMaxResults: z.number().optional(),
     queritTimeRange: z.string().nullable().optional(),
+    useDirectHttpForParseLink: z.boolean().catch(false),
   }),
   knowledgeBase: z
     .object({

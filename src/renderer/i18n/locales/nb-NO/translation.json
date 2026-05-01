@@ -666,6 +666,7 @@
   "Other concerns": "Andre bekymringer",
   "Other options": "Andre alternativer",
   "Parse Link": "Tolk lenke",
+  "Fetch URL": "Hent URL",
   "Parser": "Parser",
   "Parser Type": "Parsertype",
   "Parser used to process uploaded documents": "Parser brukt til å behandle opplastede dokumenter",
@@ -1061,5 +1062,8 @@
   "Your license has expired.": "Lisensen din har utløpt.",
   "Your license has expired. Please check your subscription or purchase a new one.": "Lisensen din har utløpt. Vennligst sjekk abonnementet ditt eller kjøp en ny.",
   "Your license has expired. You can continue using your quota pack.": "Lisensen din har utløpt. Du kan fortsette å bruke kvotepakken din.",
-  "Your rating on the App Store would help make Chatbox even better!": "Din betyg på App Store hjelper til å gjøre Chatbox enda bedre!"
+  "Your rating on the App Store would help make Chatbox even better!": "Din betyg på App Store hjelper til å gjøre Chatbox enda bedre!",
+  "Read Webpage Method": "Metode for å lese nettsider",
+  "Try direct HTTP fetching first": "Prøv direkte HTTP-henting først",
+  "When enabled, Chatbox will try to fetch webpage content directly before using the provider API. Falls back to provider if direct fetching fails. This can reduce API usage and works without a license key.": "Når aktivert, vil Chatbox prøve å hente nettsideinnhold direkte før leverandørens API brukes. Tilbake til leverandør hvis direkte henting mislykkes. Dette kan redusere API-bruk og fungerer uten lisensnøkkel."
 }

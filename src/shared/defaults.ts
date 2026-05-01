@@ -126,6 +126,7 @@ export function settings(): Settings {
         provider: 'build-in',
         tavilyApiKey: '',
         bochaApiKey: '',
+        useDirectHttpForParseLink: false,
       },
       knowledgeBase: {
         models: {

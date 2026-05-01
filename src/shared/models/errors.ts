@@ -292,6 +292,11 @@ export class ChatboxAIAPIError extends BaseError {
       i18nKey:
         'The current search provider does not support reading webpages. Please <OpenExtensionSettingButton>choose a different search provider</OpenExtensionSettingButton> that supports this capability.',
     },
+    fetch_url_failed: {
+      name: 'fetch_url_failed',
+      code: 20039,
+      i18nKey: 'Failed to fetch the URL directly. The site may have bot protection or require JavaScript. Try using parse_link instead.',
+    },
   }
   static fromCodeName(response: string, codeName: string) {
     if (!codeName) {

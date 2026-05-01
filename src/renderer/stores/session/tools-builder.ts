@@ -7,7 +7,7 @@ import { mcpController } from '@/packages/mcp/controller'
 import fileToolSet from '@/packages/model-calls/toolsets/file'
 import { getToolSet as getKBToolSet } from '@/packages/model-calls/toolsets/knowledge-base'
 import sandboxToolSet from '@/packages/model-calls/toolsets/sandbox'
-import websearchToolSet, { parseLinkTool, webSearchTool } from '@/packages/model-calls/toolsets/web-search'
+import websearchToolSet, { fetchUrlTool, parseLinkTool, webSearchTool } from '@/packages/model-calls/toolsets/web-search'
 import { PROVIDERS_WITH_PARSE_LINK } from '@/packages/web-search'
 import { skillsController } from '@/packages/skills/controller'
 import * as settingActions from '@/stores/settingActions'
@@ -96,9 +96,14 @@ export async function buildToolsForSession(
 
   if (webBrowsing && webSupported) {
     tools.web_search = webSearchTool
-    // Inject parse_link based on the selected provider's declared capability.
-    // Validation (Pro for build-in, API key for third parties) happens at execution time.
-    const searchProvider = settingActions.getExtensionSettings().webSearch.provider
+    const extensionSettings = settingActions.getExtensionSettings()
+    const searchProvider = extensionSettings.webSearch.provider
+    const useDirectHttp = extensionSettings.webSearch.useDirectHttpForParseLink
+
+    if (useDirectHttp) {
+      tools.fetch_url = fetchUrlTool
+    }
+
     if (PROVIDERS_WITH_PARSE_LINK.has(searchProvider)) {
       tools.parse_link = parseLinkTool
     }

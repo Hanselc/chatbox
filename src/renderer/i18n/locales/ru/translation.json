@@ -666,6 +666,7 @@
   "Other concerns": "Другие проблемы",
   "Other options": "Другие варианты",
   "Parse Link": "Разобрать ссылку",
+  "Fetch URL": "Получить URL",
   "Parser": "Парсер",
   "Parser Type": "Тип парсера",
   "Parser used to process uploaded documents": "Парсер используется для обработки загруженных документов",
@@ -1062,5 +1063,8 @@
   "Your license has expired.": "Ваша лицензия истекла.",
   "Your license has expired. Please check your subscription or purchase a new one.": "Ваша лицензия истекла. Пожалуйста, проверьте вашу подписку или приобретите новую.",
   "Your license has expired. You can continue using your quota pack.": "Срок действия вашей лицензии истёк. Вы можете продолжить использовать свой пакет квот.",
-  "Your rating on the App Store would help make Chatbox even better!": "Ваш рейтинг в App Store поможет сделать Chatbox еще лучше!"
+  "Your rating on the App Store would help make Chatbox even better!": "Ваш рейтинг в App Store поможет сделать Chatbox еще лучше!",
+  "Read Webpage Method": "Метод чтения веб-страниц",
+  "Try direct HTTP fetching first": "Сначала попробовать прямое HTTP-получение",
+  "When enabled, Chatbox will try to fetch webpage content directly before using the provider API. Falls back to provider if direct fetching fails. This can reduce API usage and works without a license key.": "При включении Chatbox будет пытаться получить содержимое веб-страницы напрямую, прежде чем использовать API провайдера. Возврат к провайдеру, если прямое получение не удалось. Это может сократить использование API и работает без лицензионного ключа."
 }

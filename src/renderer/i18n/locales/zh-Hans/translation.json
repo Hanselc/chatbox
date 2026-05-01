@@ -668,6 +668,7 @@
   "Other concerns": "其他问题",
   "Other options": "其他选项",
   "Parse Link": "解析链接",
+  "Fetch URL": "获取网页",
   "Parser": "解析器",
   "Parser Type": "解析器类型",
   "Parser used to process uploaded documents": "用于处理上传文档的解析器",
@@ -1069,5 +1070,8 @@
   "Your license has expired.": "您的许可证已过期。",
   "Your license has expired. Please check your subscription or purchase a new one.": "您的 license 已过期。请检查您的订阅或重新购买。",
   "Your license has expired. You can continue using your quota pack.": "您的许可证已过期。您可以继续使用您的配额包。",
-  "Your rating on the App Store would help make Chatbox even better!": "您的 App Store 评分将帮助 Chatbox 变得更好！"
+  "Your rating on the App Store would help make Chatbox even better!": "您的 App Store 评分将帮助 Chatbox 变得更好！",
+  "Read Webpage Method": "读取网页方式",
+  "Try direct HTTP fetching first": "优先尝试直接 HTTP 获取",
+  "When enabled, Chatbox will try to fetch webpage content directly before using the provider API. Falls back to provider if direct fetching fails. This can reduce API usage and works without a license key.": "启用后，Chatbox 会先尝试直接获取网页内容，再使用提供商 API。若直接获取失败则回退到提供商。这可以减少 API 使用量，且无需 license key 即可使用。"
 }
