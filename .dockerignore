@@ -1,0 +1,51 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+release/app/dist
+release/build
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Testing
+coverage
+.nyc_output
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Misc
+*.md
+docs
+team-sharing/test
+test
+.github
+.circleci
+
+# Mobile platforms (not needed for web build)
+android
+ios
+
+# Electron specific (not needed for web build)
+release/app/node_modules
