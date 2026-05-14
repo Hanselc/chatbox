@@ -56,7 +56,7 @@ async function _generateName(sessionId: string, modifyName: (sessionId: string, 
     const result = await generateText(
       model,
       promptFormat.nameConversation(
-        session.messages.filter((m) => m.role !== 'system').slice(0, 4),
+        session.messages.filter((m) => m.role === 'user').slice(0, 5),
         languageNameMap[settings.language]
       )
     )
@@ -66,7 +66,9 @@ async function _generateName(sessionId: string, modifyName: (sessionId: string, 
         .map((c) => c.text)
         .join('') || ''
     name = name.replace(/['""\u201C\u201D]/g, '').replace(/<think>.*?<\/think>/g, '')
-    await modifyName(sessionId, name)
+    if (name.trim()) {
+      await modifyName(sessionId, name)
+    }
   } catch (e: unknown) {
     if (!(e instanceof ApiError || e instanceof NetworkError)) {
       Sentry.captureException(e)
@@ -77,14 +79,14 @@ async function _generateName(sessionId: string, modifyName: (sessionId: string, 
 /**
  * Generate session name and thread name
  */
-async function generateNameAndThreadName(sessionId: string) {
+export async function generateNameAndThreadName(sessionId: string) {
   return await _generateName(sessionId, modifyNameAndThreadName)
 }
 
 /**
  * Generate thread name only
  */
-async function generateThreadName(sessionId: string) {
+export async function generateThreadName(sessionId: string) {
   return await _generateName(sessionId, modifyThreadName)
 }
 

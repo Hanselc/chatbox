@@ -10,20 +10,20 @@ export function nameConversation(msgs: Message[], language: string): Message[] {
       contentParts: [
         {
           type: 'text',
-          text: `Based on the chat history, give this conversation a name.
-Keep it short - 10 words max, no quotes.
+          text: `Based on the user's messages, give this conversation a concise name that clearly captures the main topic.
 Use ${language}.
+Keep it under 10 words, no quotes.
 Just provide the name, nothing else.
 
-Here's the conversation:
+Here's what the user said:
 
 \`\`\`
 ${
-  format(msgs.slice(0, 5).map((msg) => getMessageText(msg, true, false).slice(0, 100))) // 限制长度以节省 tokens
+  format(msgs.slice(0, 5).map((msg) => getMessageText(msg, true, false).slice(0, 500))) // limit length to save tokens
 }
 \`\`\`
 
-Name this conversation in 10 characters or less.
+Name this conversation by focusing on the main topic of the user's request.
 Use ${language}.
 Only give the name, nothing else.
 

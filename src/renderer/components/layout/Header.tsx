@@ -3,12 +3,9 @@ import { ActionIcon, Badge, Flex, Text, Tooltip } from '@mantine/core'
 import type { Session } from '@shared/types'
 import { IconLayoutSidebarLeftExpand, IconMenu2, IconPencil } from '@tabler/icons-react'
 import clsx from 'clsx'
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import useNeedRoomForWinControls from '@/hooks/useNeedRoomForWinControls'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
-import { scheduleGenerateNameAndThreadName, scheduleGenerateThreadName } from '@/stores/sessionActions'
-import * as settingActions from '@/stores/settingActions'
 import { useUIStore } from '@/stores/uiStore'
 import Divider from '../common/Divider'
 import { ScalableIcon } from '../common/ScalableIcon'
@@ -24,25 +21,6 @@ export default function Header(props: { session: Session }) {
   const { needRoomForMacWindowControls } = useNeedRoomForWinControls()
 
   const { session: currentSession } = props
-
-  useEffect(() => {
-    const autoGenerateTitle = settingActions.getAutoGenerateTitle()
-    if (!autoGenerateTitle) {
-      return
-    }
-
-    const hasGeneratingMessage = currentSession.messages.some((msg) => msg.generating)
-
-    if (hasGeneratingMessage || currentSession.messages.length < 2) {
-      return
-    }
-
-    if (currentSession.name === 'Untitled') {
-      scheduleGenerateNameAndThreadName(currentSession.id)
-    } else if (!currentSession.threadName) {
-      scheduleGenerateThreadName(currentSession.id)
-    }
-  }, [currentSession])
 
   const editCurrentSession = () => {
     if (!currentSession) {
