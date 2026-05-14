@@ -18,6 +18,8 @@ import * as chatStore from '../chatStore'
 import * as settingActions from '../settingActions'
 import { settingsStore } from '../settingsStore'
 import { uiStore } from '../uiStore'
+import { generateNameAndThreadName, generateThreadName } from './naming'
+import { activeNameGenerations } from './state'
 
 /**
  * Get session-level web browsing setting
@@ -140,6 +142,28 @@ export async function submitNewUserMessage(
 
   // 先在聊天列表中插入发送的用户消息
   await insertMessage(sessionId, newUserMsg)
+
+  // Trigger name generation in parallel (fire-and-forget) so it never blocks the assistant response
+  const autoGenerateTitle = settingActions.getAutoGenerateTitle()
+  if (autoGenerateTitle) {
+    if (session.name === 'Untitled') {
+      const nameKey = `name-${sessionId}`
+      if (!activeNameGenerations.has(nameKey)) {
+        activeNameGenerations.add(nameKey)
+        generateNameAndThreadName(sessionId)
+          .catch(() => {})
+          .finally(() => activeNameGenerations.delete(nameKey))
+      }
+    } else if (!session.threadName) {
+      const threadKey = `thread-${sessionId}`
+      if (!activeNameGenerations.has(threadKey)) {
+        activeNameGenerations.add(threadKey)
+        generateThreadName(sessionId)
+          .catch(() => {})
+          .finally(() => activeNameGenerations.delete(threadKey))
+      }
+    }
+  }
 
   const globalSettings = settingsStore.getState().getSettings()
   const isPro = settingActions.isPro()

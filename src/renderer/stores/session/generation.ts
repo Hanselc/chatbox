@@ -173,6 +173,7 @@ export async function generate(
     const sessionKnowledgeBaseMap = uiStore.getState().sessionKnowledgeBaseMap
     const knowledgeBase = sessionKnowledgeBaseMap[sessionId]
     const webBrowsing = getSessionWebBrowsing(sessionId, settings.provider)
+
     switch (session.type) {
       // Chat message generation
       case 'chat':
