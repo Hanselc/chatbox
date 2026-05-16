@@ -19,6 +19,7 @@ import path from 'path'
 import * as sourceMapSupport from 'source-map-support'
 import type { ShortcutSetting } from 'src/shared/types'
 import * as analystic from './analystic-node'
+import { AppUpdater } from './app-updater'
 import * as autoLauncher from './autoLauncher'
 import { handleDeepLink } from './deeplinks'
 import { parseFile } from './file-parser'
@@ -610,10 +611,19 @@ ipcMain.handle('relaunch', () => {
 })
 
 ipcMain.handle('analysticTrackingEvent', (event, dataJson) => {
-  const data = JSON.parse(dataJson)
-  analystic.event(data.name, data.params).catch((e) => {
-    log.error('analystic_tracking_event', e)
-  })
+  try {
+    const settings = getSettings()
+    // Defensive: treat undefined/null/false as disabled
+    if (settings.allowReportingAndTracking !== true) {
+      return
+    }
+    const data = JSON.parse(dataJson)
+    analystic.event(data.name, data.params).catch((e) => {
+      log.error('analystic_tracking_event', e)
+    })
+  } catch (e) {
+    log.error('analystic_tracking_event handler error', e)
+  }
 })
 
 ipcMain.handle('getConfig', (event) => {

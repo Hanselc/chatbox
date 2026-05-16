@@ -174,10 +174,18 @@ export default class DesktopPlatform implements Platform {
     return this.ipc.invoke('listStoreBlobKeys')
   }
 
-  public initTracking(): void {
+  public async initTracking(): Promise<void> {
+    let allowReportingAndTracking = true
+    try {
+      const settings = await this.ipc.invoke('getSettings')
+      allowReportingAndTracking = settings.allowReportingAndTracking
+    } catch {}
+    if (!allowReportingAndTracking) {
+      return
+    }
     setTimeout(() => {
       this.trackingEvent('user_engagement', {})
-    }, 4000) // 怀疑应用初始化后需要一段时间才能正常工作
+    }, 4000)
   }
   public trackingEvent(name: string, params: { [key: string]: string }) {
     const dataJson = JSON.stringify({ name, params })

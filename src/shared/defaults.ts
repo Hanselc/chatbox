@@ -85,7 +85,7 @@ export function settings(): Settings {
 
     defaultPrompt: getDefaultPrompt(),
 
-    allowReportingAndTracking: true,
+    allowReportingAndTracking: false,
 
     enableMarkdownRendering: true,
     enableLaTeXRendering: true,

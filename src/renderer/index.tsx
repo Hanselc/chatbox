@@ -38,7 +38,7 @@ import './setup/ga_init'
 import './setup/protect'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { initLastUsedModelStore } from './stores/lastUsedModelStore'
-import { initSettingsStore } from './stores/settingsStore'
+import { initSettingsStore, settingsStore } from './stores/settingsStore'
 
 // 开发环境下引入错误测试工具
 // if (process.env.NODE_ENV === 'development') {
@@ -63,7 +63,9 @@ async function initializeApp() {
     log.info('migrate done')
   } catch (e) {
     log.error('migrate error', e)
-    Sentry.captureException(e as Error)
+    if (settingsStore.getState().allowReportingAndTracking) {
+      Sentry.captureException(e as Error)
+    }
   }
 
   // 最后执行 storage 清理，清理不 block 进入UI
@@ -127,7 +129,9 @@ const tid = setTimeout(() => {
 initializeApp()
   .catch((e) => {
     // 初始化中的各个步骤已经捕获了错误，这里防止未来添加未捕获的逻辑
-    Sentry.captureException(e)
+    if (settingsStore.getState().allowReportingAndTracking) {
+      Sentry.captureException(e)
+    }
     log.error('initializeApp error', e)
   })
   .finally(async () => {
