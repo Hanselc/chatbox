@@ -85,7 +85,7 @@ export function settings(): Settings {
 
     defaultPrompt: getDefaultPrompt(),
 
-    allowReportingAndTracking: true,
+    allowReportingAndTracking: false,
 
     enableMarkdownRendering: true,
     enableLaTeXRendering: true,
@@ -155,7 +155,7 @@ export function newConfigs(): Config {
 }
 
 export function getDefaultPrompt() {
-  return 'You are a helpful assistant.'
+  return ''
 }
 
 export function chatSessionSettings(): SessionSettings {

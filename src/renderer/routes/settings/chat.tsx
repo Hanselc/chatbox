@@ -131,6 +131,7 @@ export function RouteComponent() {
           <Text fw="500">{t('Prompt')}</Text>
           <Textarea
             value={settings.defaultPrompt || ''}
+            placeholder={getDefaultPrompt()}
             autosize
             minRows={1}
             maxRows={12}

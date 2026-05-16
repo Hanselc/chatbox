@@ -71,7 +71,9 @@ async function _generateName(sessionId: string, modifyName: (sessionId: string, 
     }
   } catch (e: unknown) {
     if (!(e instanceof ApiError || e instanceof NetworkError)) {
-      Sentry.captureException(e)
+      if (settingsStore.getState().allowReportingAndTracking) {
+        Sentry.captureException(e)
+      }
     }
   }
 }

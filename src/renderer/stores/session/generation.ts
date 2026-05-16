@@ -285,7 +285,9 @@ export async function generate(
         isExpectedOCRError
       )
     ) {
-      Sentry.captureException(error) // unexpected error should be reported
+      if (settingsStore.getState().allowReportingAndTracking) {
+        Sentry.captureException(error) // unexpected error should be reported
+      }
     }
     let errorCode: number | undefined
     if (err instanceof BaseError) {

@@ -106,6 +106,10 @@ export default class WebPlatform extends IndexedDBStorage implements Platform {
   }
 
   public async initTracking() {
+    const { settingsStore } = await import('../stores/settingsStore')
+    if (!settingsStore.getState().allowReportingAndTracking) {
+      return
+    }
     const GAID = 'G-B365F44W6E'
     try {
       const conf = await this.getConfig()

@@ -206,7 +206,7 @@ export function ShortcutConfig(props: {
 
         <Table.Tbody>
           {items.map(({ name, label, keys, options }) => (
-            <Table.Tr key={`${name}`}>
+            <Table.Tr key={name || label}>
               <Table.Td>{label}</Table.Td>
               <Table.Td>
                 {options ? (
