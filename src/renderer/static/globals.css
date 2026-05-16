@@ -310,3 +310,33 @@ div[data-vaul-overlay] {
 div[data-vaul-drawer] {
   z-index: 2000;
 }
+
+/* react-colorful custom styles */
+.react-colorful {
+  border-radius: var(--chatbox-radius-md);
+  overflow: hidden;
+}
+
+.react-colorful__saturation {
+  border-radius: var(--chatbox-radius-md) var(--chatbox-radius-md) 0 0;
+}
+
+.react-colorful__hue {
+  height: 20px;
+  border-radius: 0 0 var(--chatbox-radius-md) var(--chatbox-radius-md);
+}
+
+.react-colorful__pointer {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.react-colorful__saturation-pointer {
+  border-radius: 50%;
+}
+
+.react-colorful__hue-pointer {
+  border-radius: 50%;
+}

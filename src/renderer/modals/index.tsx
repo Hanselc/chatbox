@@ -4,12 +4,17 @@ import ArtifactPreview from './ArtifactPreview'
 import AttachLink from './AttachLink'
 import ClearSessionList from './ClearSessionList'
 import ContentViewer from './ContentViewer'
+import DeleteFolder from './DeleteFolder'
+import DeleteSession from './DeleteSession'
 import EdgeOneDeploySuccess from './EdgeOneDeploySuccess'
+import GlobalSystemInstruction from './GlobalSystemInstruction'
 import ExportChat from './ExportChat'
 import FileParseError from './FileParseError'
+import FolderSettings from './FolderSettings'
 import JsonViewer from './JsonViewer'
 import MessageEdit from './MessageEdit'
 import ModelEdit from './ModelEdit'
+import MoveSessionToFolder from './MoveSessionToFolder'
 import ReportContent from './ReportContent'
 import SessionSettings from './SessionSettings'
 import ThreadNameEdit from './ThreadNameEdit'
@@ -32,3 +37,8 @@ NiceModal.register('model-edit', ModelEdit)
 NiceModal.register('thread-name-edit', ThreadNameEdit)
 NiceModal.register('edgeone-deploy-success', EdgeOneDeploySuccess)
 NiceModal.register('copilot-settings', CopilotSettingsModal)
+NiceModal.register('folder-settings', FolderSettings)
+NiceModal.register('delete-folder', DeleteFolder)
+NiceModal.register('delete-session', DeleteSession)
+NiceModal.register('move-session-to-folder', MoveSessionToFolder)
+NiceModal.register('global-system-instruction', GlobalSystemInstruction)

@@ -578,7 +578,7 @@ export function mergeSettings(
   })
 }
 
-export function initEmptyChatSession(): Omit<Session, 'id'> {
+export function initEmptyChatSession(folderId?: string): Omit<Session, 'id'> {
   const settings = settingsStore.getState().getSettings()
   const { chat: lastUsedChatModel } = lastUsedModelStore.getState()
   const newSession: Omit<Session, 'id'> = {
@@ -596,10 +596,9 @@ export function initEmptyChatSession(): Omit<Session, 'id'> {
           }
         : lastUsedChatModel),
     },
-  }
-  const prompt = (settings.defaultPrompt || defaults.getDefaultPrompt())?.trim()
-  if (prompt) {
-    newSession.messages.push(createMessage('system', prompt))
+    folderId,
+    sortOrder: Date.now(),
+    systemInstruction: '',
   }
   return newSession
 }
@@ -618,7 +617,7 @@ export function initEmptyPictureSession(): Omit<Session, 'id'> {
 }
 
 export function getSessionMeta(session: SessionMeta) {
-  return pick(session, ['id', 'name', 'starred', 'hidden', 'assistantAvatarKey', 'picUrl', 'backgroundImage', 'type'])
+  return pick(session, ['id', 'name', 'starred', 'hidden', 'assistantAvatarKey', 'picUrl', 'backgroundImage', 'type', 'folderId', 'sortOrder'])
 }
 
 function _searchSessions(regexp: RegExp, s: Session) {

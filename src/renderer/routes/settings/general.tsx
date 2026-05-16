@@ -353,6 +353,8 @@ const ImportExportDataSection = () => {
               exportItems.includes(ExportDataItem.Conversations)
             ) {
               shouldExport = true
+            } else if (key === StorageKey.ChatFolders && exportItems.includes(ExportDataItem.Conversations)) {
+              shouldExport = true
             } else if (key === StorageKey.ConfigVersion) {
               shouldExport = true
             }

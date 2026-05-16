@@ -49,6 +49,8 @@ import { getSessionMeta, mergeSettings } from '@/stores/sessionHelpers'
 import { settingsStore, useSettingsStore } from '@/stores/settingsStore'
 import { add as addToast } from '@/stores/toastActions'
 import { getMessageText } from '../../shared/utils/message'
+import { buildCombinedInstruction } from '@/utils/system-instruction'
+import { getFolderById } from '@/stores/folderStore'
 
 const SessionSettingsModal = NiceModal.create(
   ({ session, disableAutoSave = false }: { session: Session; disableAutoSave?: boolean }) => {
@@ -73,8 +75,7 @@ const SessionSettingsModal = NiceModal.create(
       if (!session) {
         setSystemPrompt('')
       } else {
-        const systemMessage = session.messages.find((m) => m.role === 'system')
-        setSystemPrompt(systemMessage ? getMessageText(systemMessage) : '')
+        setSystemPrompt(session.systemInstruction ?? '')
       }
     }, [session])
 
@@ -107,43 +108,49 @@ const SessionSettingsModal = NiceModal.create(
       modal.hide()
     }
 
-    const applySessionChanges = (target: Session) => {
+    const applySessionChanges = (target: Session, folder: import('@shared/types').ChatFolder | null, globalPrompt: string) => {
       target.name = (target.name ?? '').trim() || session.name
-      const trimmed = systemPrompt.trim()
-      const messages = Array.isArray(target.messages) ? [...target.messages] : []
-      if (trimmed === '') {
-        target.messages = messages.filter((m) => m.role !== 'system')
+      target.systemInstruction = systemPrompt.trim()
+
+      const combined = buildCombinedInstruction({
+        globalPrompt: globalPrompt.trim(),
+        folderInstruction: folder?.systemInstruction || '',
+        chatInstruction: target.systemInstruction || '',
+        ignoreGlobal: folder?.ignoreOtherInstructions || false,
+      })
+
+      const nonSystemMessages = target.messages.filter((m) => m.role !== 'system')
+      if (combined) {
+        const sysMsg = createMessage('system', combined)
+        sysMsg.timestamp = 0
+        target.messages = [sysMsg, ...nonSystemMessages]
       } else {
-        const idx = messages.findIndex((m) => m.role === 'system')
-        if (idx >= 0) {
-          const sys = { ...messages[idx], contentParts: [{ type: 'text' as const, text: trimmed }] }
-          target.messages = [...messages.slice(0, idx), sys, ...messages.slice(idx + 1)]
-        } else {
-          target.messages = [createMessage('system', trimmed), ...messages]
-        }
+        target.messages = nonSystemMessages
       }
       return target
     }
-    const onSave = () => {
+
+    const onSave = async () => {
       if (!session || !editingData) {
         return
       }
 
+      const folder = session.folderId ? (await getFolderById(session.folderId)) ?? null : null
+      const globalPrompt = settingsStore.getState().getSettings().defaultPrompt || ''
+
       if (!disableAutoSave) {
-        void updateSession(editingData.id, (s) => {
+        await updateSession(editingData.id, (s) => {
           const merged = {
             ...(s ?? {}),
             ...getSessionMeta(editingData),
             settings: editingData.settings,
           } as Session
-
-          return applySessionChanges(merged)
+          return applySessionChanges(merged, folder, globalPrompt)
         })
       } else {
-        applySessionChanges(editingData)
+        applySessionChanges(editingData, folder, globalPrompt)
       }
 
-      // setChatConfigDialogSessionId(null)
       modal.resolve(editingData)
       modal.hide()
     }

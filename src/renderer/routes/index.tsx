@@ -25,8 +25,7 @@ import { openLinkWithAuth } from '@/packages/openLinkWithAuth'
 import * as remote from '@/packages/remote'
 import { router } from '@/router'
 import { useAuthInfoStore } from '@/stores/authInfoStore'
-import { createSession as createSessionStore } from '@/stores/chatStore'
-import { submitNewUserMessage, switchCurrentSession } from '@/stores/sessionActions'
+import { create, submitNewUserMessage, switchCurrentSession } from '@/stores/sessionActions'
 import { initEmptyChatSession } from '@/stores/sessionHelpers'
 import { useLanguage, useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
@@ -153,16 +152,8 @@ function Index() {
 
   const handleSubmit = useCallback(
     async ({ constructedMessage, needGenerating = true, onUserMessageReady }: InputBoxPayload) => {
-      const newSession = await createSessionStore({
-        name: session.name,
-        type: 'chat',
-        assistantAvatarKey: session.assistantAvatarKey,
-        picUrl: session.picUrl,
-        backgroundImage: session.backgroundImage,
-        messages: session.messages,
-        copilotId: session.copilotId,
-        settings: session.settings,
-      })
+      const { id: _, ...sessionData } = session
+      const newSession = await create(sessionData)
 
       if (session.copilotId) {
         void remote
