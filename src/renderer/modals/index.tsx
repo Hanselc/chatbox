@@ -5,6 +5,7 @@ import AttachLink from './AttachLink'
 import ClearSessionList from './ClearSessionList'
 import ContentViewer from './ContentViewer'
 import DeleteFolder from './DeleteFolder'
+import DeleteSession from './DeleteSession'
 import EdgeOneDeploySuccess from './EdgeOneDeploySuccess'
 import GlobalSystemInstruction from './GlobalSystemInstruction'
 import ExportChat from './ExportChat'
@@ -38,5 +39,6 @@ NiceModal.register('edgeone-deploy-success', EdgeOneDeploySuccess)
 NiceModal.register('copilot-settings', CopilotSettingsModal)
 NiceModal.register('folder-settings', FolderSettings)
 NiceModal.register('delete-folder', DeleteFolder)
+NiceModal.register('delete-session', DeleteSession)
 NiceModal.register('move-session-to-folder', MoveSessionToFolder)
 NiceModal.register('global-system-instruction', GlobalSystemInstruction)

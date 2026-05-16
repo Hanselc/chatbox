@@ -1,4 +1,4 @@
-import { ActionIcon, Grid, Input, Paper, ScrollArea, Text } from '@mantine/core'
+import { ActionIcon, Input, Paper, ScrollArea, Text } from '@mantine/core'
 import type { TablerIcon } from '@tabler/icons-react'
 import { IconSearch } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
@@ -115,7 +115,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
   }, [search])
 
   return (
-    <div className="w-full">
+    <div style={{ width: '100%' }}>
       <Input
         placeholder={t('Search icons...')}
         value={search}
@@ -126,7 +126,13 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
 
       <Paper withBorder className="p-2 mt-3">
         <ScrollArea h={180}>
-          <Grid gutter="xs">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '8px',
+            }}
+          >
             {availableIcons.map((iconName) => {
               const IconComponent = (TablerIcons as Record<string, TablerIcon>)[iconName]
               if (!IconComponent) return null
@@ -134,20 +140,19 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
               const isSelected = value === iconName
 
               return (
-                <Grid.Col span={3} key={iconName}>
-                  <ActionIcon
-                    variant={isSelected ? 'filled' : 'subtle'}
-                    color={isSelected ? 'chatbox-brand' : 'gray'}
-                    className="w-full h-10"
-                    onClick={() => onChange(iconName)}
-                    title={iconName.replace('Icon', '')}
-                  >
-                    <ScalableIcon icon={IconComponent} size={20} />
-                  </ActionIcon>
-                </Grid.Col>
+                <ActionIcon
+                  key={iconName}
+                  variant={isSelected ? 'filled' : 'subtle'}
+                  color={isSelected ? 'chatbox-brand' : 'gray'}
+                  className="w-full h-10"
+                  onClick={() => onChange(iconName)}
+                  title={iconName.replace('Icon', '')}
+                >
+                  <ScalableIcon icon={IconComponent} size={20} />
+                </ActionIcon>
               )
             })}
-          </Grid>
+          </div>
 
           {availableIcons.length === 0 && (
             <Text c="dimmed" ta="center" py="xl">

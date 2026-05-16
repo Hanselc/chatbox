@@ -7,11 +7,7 @@ import { memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
 import { router } from '@/router'
-import {
-  deleteSession as deleteSessionStore,
-  getSession,
-  updateSession as updateSessionStore,
-} from '@/stores/chatStore'
+import { getSession, updateSession as updateSessionStore } from '@/stores/chatStore'
 import { copyAndSwitchSession, switchCurrentSession } from '@/stores/sessionActions'
 import { useFolders } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
@@ -71,25 +67,6 @@ function SessionItem(props: Props) {
         },
       },
     ],
-    [session, t]
-  )
-
-  const deleteItem = useMemo<ActionMenuItemProps>(
-    () => ({
-      doubleCheck: true,
-      text: t('Delete'),
-      icon: IconTrash,
-      onClick: async () => {
-        try {
-          await deleteSessionStore(session.id)
-          if (selected) {
-            router.navigate({ to: '/', replace: true })
-          }
-        } catch (error) {
-          console.error('Failed to delete session:', error)
-        }
-      },
-    }),
     [session, t]
   )
 
@@ -186,15 +163,15 @@ function SessionItem(props: Props) {
           <Menu.Item
             color="chatbox-error"
             leftSection={<IconTrash size={14} />}
-            onClick={async () => {
-              try {
-                await deleteSessionStore(session.id)
-                if (selected) {
-                  router.navigate({ to: '/', replace: true })
-                }
-              } catch (error) {
-                console.error('Failed to delete session:', error)
-              }
+            onClick={() => {
+              void NiceModal.show('delete-session', {
+                session,
+                onDeleted: () => {
+                  if (selected) {
+                    router.navigate({ to: '/', replace: true })
+                  }
+                },
+              })
             }}
           >
             {t('Delete')}

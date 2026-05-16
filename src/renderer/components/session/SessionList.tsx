@@ -18,7 +18,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import NiceModal from '@ebay/nice-modal-react'
-import { ActionIcon, Flex, Text, Tooltip } from '@mantine/core'
+import { ActionIcon, Divider, Flex, Text, Tooltip } from '@mantine/core'
 import { IconArchive, IconFolderPlus, IconSearch } from '@tabler/icons-react'
 import { useRouterState } from '@tanstack/react-router'
 import type { MutableRefObject } from 'react'
@@ -38,7 +38,10 @@ export interface Props {
   sessionListViewportRef: MutableRefObject<HTMLDivElement | null>
 }
 
-type ListItem = { type: 'folder'; folderId: string } | { type: 'session'; session: SessionMeta; folderId?: string }
+type ListItem =
+  | { type: 'folder'; folderId: string }
+  | { type: 'session'; session: SessionMeta; folderId?: string }
+  | { type: 'separator' }
 
 export default function SessionList(props: Props) {
   const { t } = useTranslation()
@@ -83,7 +86,7 @@ export default function SessionList(props: Props) {
 
   const sortedFolders = useMemo(() => {
     if (!folders) return []
-    return [...folders].sort((a, b) => a.sortOrder - b.sortOrder)
+    return [...folders].sort((a, b) => a.name.localeCompare(b.name))
   }, [folders])
 
   const folderSessionsMap = useMemo(() => {
@@ -117,6 +120,12 @@ export default function SessionList(props: Props) {
     }
 
     const uncategorized = sortedSessions.filter((s) => getEffectiveFolderId(s, sortedFolders) === null)
+
+    // Add separator only if there are folders AND uncategorized sessions
+    if (sortedFolders.length > 0 && uncategorized.length > 0) {
+      items.push({ type: 'separator' })
+    }
+
     for (const session of uncategorized) {
       items.push({ type: 'session', session })
     }
@@ -237,6 +246,10 @@ export default function SessionList(props: Props) {
                     />
                   </SortableItem>
                 )
+              }
+
+              if (item.type === 'separator') {
+                return <Divider my="xs" mx="md" />
               }
 
               return null

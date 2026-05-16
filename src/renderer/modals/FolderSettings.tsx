@@ -1,15 +1,31 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
-import { ActionIcon, Button, ColorInput, Flex, Input, Stack, Switch, Text, Textarea, Transition } from '@mantine/core'
+import { ActionIcon, Button, Flex, Input, Stack, Switch, Text, Textarea, Transition } from '@mantine/core'
 import type { ChatFolder } from '@shared/types'
 import type { TablerIcon } from '@tabler/icons-react'
 import { IconArrowLeft, IconChevronRight, IconFolder } from '@tabler/icons-react'
 import * as TablerIcons from '@tabler/icons-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { HexColorPicker } from 'react-colorful'
 import { useTranslation } from 'react-i18next'
 import { AdaptiveModal } from '@/components/common/AdaptiveModal'
 import { IconPicker } from '@/components/common/IconPicker'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
 import { createFolder, updateFolder, updateFolderInstructionsOnAllSessions } from '@/stores/folderStore'
+
+const PRESET_COLORS = [
+  '#228be6',
+  '#fa5252',
+  '#12b886',
+  '#fab005',
+  '#7950f2',
+  '#be4bdb',
+  '#e64980',
+  '#fd7e14',
+  '#40c057',
+  '#15aabf',
+  '#868e96',
+  '#343a40',
+]
 
 type FolderSettingsModalProps = {
   folder?: ChatFolder
@@ -77,11 +93,13 @@ const FolderSettingsModal = NiceModal.create(({ folder }: FolderSettingsModalPro
       }
     }
 
+    setScreen('main')
     modal.resolve()
     modal.hide()
   }, [name, systemInstruction, ignoreOtherInstructions, icon, color, folder, isCreate, modal])
 
   const handleCancel = useCallback(() => {
+    setScreen('main')
     modal.resolve()
     modal.hide()
   }, [modal])
@@ -183,7 +201,6 @@ const FolderSettingsModal = NiceModal.create(({ folder }: FolderSettingsModalPro
 
               <div className="mt-6">
                 <AdaptiveModal.Actions>
-                  <AdaptiveModal.CloseButton onClick={handleCancel} />
                   <Button onClick={handleSave} disabled={!name.trim()}>
                     {isCreate ? t('Create') : t('Save')}
                   </Button>
@@ -213,29 +230,47 @@ const FolderSettingsModal = NiceModal.create(({ folder }: FolderSettingsModalPro
               }}
             >
               <Stack>
-                {/* Color Picker - First as requested */}
+                {/* Color Picker */}
                 <Input.Wrapper label={t('Color')}>
-                  <ColorInput
-                    placeholder={t('Choose color') || ''}
-                    value={color}
-                    onChange={setColor}
-                    withPicker
-                    withEyeDropper={false}
-                    swatches={[
-                      '#228be6',
-                      '#fa5252',
-                      '#12b886',
-                      '#fab005',
-                      '#7950f2',
-                      '#be4bdb',
-                      '#e64980',
-                      '#fd7e14',
-                      '#40c057',
-                      '#15aabf',
-                      '#868e96',
-                      '#343a40',
-                    ]}
-                  />
+                  <div className="flex flex-col gap-2">
+                    {/* Color Picker */}
+                    <div className="react-colorful-wrapper">
+                      <HexColorPicker
+                        color={color || '#228be6'}
+                        onChange={setColor}
+                        style={{ width: '100%', height: '120px' }}
+                      />
+                    </div>
+
+                    {/* Color Preview, Hex Input and Preset Colors in one row */}
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-6 h-6 rounded border border-chatbox-border-primary flex-shrink-0"
+                        style={{ backgroundColor: color || 'transparent' }}
+                      />
+                      <input
+                        type="text"
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                        placeholder="#228be6"
+                        className="w-20 px-2 py-1 rounded bg-chatbox-background-gray-secondary border border-chatbox-border-primary text-chatbox-tint-primary text-xs focus:outline-none focus:border-chatbox-accent"
+                      />
+                      <div className="flex-1 flex gap-1">
+                        {PRESET_COLORS.map((presetColor) => (
+                          <button
+                            key={presetColor}
+                            className="w-4 h-4 rounded-sm border transition-all hover:scale-110 flex-shrink-0"
+                            style={{
+                              backgroundColor: presetColor,
+                              borderColor: color === presetColor ? '#fff' : 'transparent',
+                              boxShadow: color === presetColor ? `0 0 0 1px ${presetColor}` : 'none',
+                            }}
+                            onClick={() => setColor(presetColor)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </Input.Wrapper>
 
                 {/* Icon Picker - Second as requested */}

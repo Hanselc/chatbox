@@ -310,6 +310,7 @@
     "lodash": "^4.17.21",
     "ofetch": "^1.0.1",
     "officeparser": "5.0.0",
+    "react-colorful": "^5.7.0",
     "sanitize-filename": "^1.6.3",
     "turndown": "^7.2.4",
     "uuid": "^9.0.0"

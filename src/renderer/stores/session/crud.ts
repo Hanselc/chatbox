@@ -268,11 +268,13 @@ export async function switchToNext(reversed?: boolean) {
 }
 
 /**
- * Clear session list, keeping only specified number of sessions
+ * Clear session list, keeping only specified number of sessions (excluding sessions in folders)
  */
 async function clearSessionList(keepNum: number) {
   const sessionMetaList = await chatStore.listSessionsMeta()
-  const deleted = sessionMetaList?.slice(keepNum)
+  // Filter out sessions that are in folders - they should not be deleted
+  const sessionsNotInFolders = sessionMetaList?.filter((s) => !s.folderId) ?? []
+  const deleted = sessionsNotInFolders?.slice(keepNum)
   if (!deleted?.length) {
     return
   }
