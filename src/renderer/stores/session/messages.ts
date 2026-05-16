@@ -23,12 +23,17 @@ import { activeNameGenerations } from './state'
 
 /**
  * Get session-level web browsing setting
- * Returns user's explicit setting if set, otherwise returns default based on provider
+ * Returns user's explicit setting if set, otherwise uses last preference from settings, then provider default
  */
 function getSessionWebBrowsing(sessionId: string, provider: string | undefined): boolean {
   const sessionValue = uiStore.getState().sessionWebBrowsingMap[sessionId]
   if (sessionValue !== undefined) {
     return sessionValue
+  }
+  // Check last used preference from settings (persisted across sessions)
+  const lastUsed = settingsStore.getState().extension.webSearch.lastWebBrowsingEnabled
+  if (lastUsed !== undefined) {
+    return lastUsed
   }
   // Default: true for ChatboxAI, false for others
   return provider === ModelProviderEnum.ChatboxAI
