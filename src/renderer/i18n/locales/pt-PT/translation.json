@@ -1011,7 +1011,7 @@
   "View License Details": "Ver Detalhes da Licença",
   "View Message JSON": "Ver Mensagem JSON",
   "View More Plans": "Ver Mais Planos",
-  "View Session JSON": "THOUGHTS: The user wants to translate \"View Session JSON\" from English to European Portuguese.\n\"View\" translates to \"Ver\".\n\"Session JSON\" refers to a specific data format and can often be kept as is, or translated literally if it makes sense. In UI, technical terms like \"JSON\" are often left untranslated. \"Sessão\" for \"Session\" is correct.\n\nCombining them, \"Ver JSON da Sessão\" or \"Ver JSON de Sessão\" would be appropriate. \"Da\" or \"de\" works here; \"da\" feels slightly more natural if \"JSON\" is considered the property of \"Sessão\".Ver JSON da Sessão",
+  "View Session JSON": "Ver JSON da Sessão",
   "Violence or dangerous content": "Violência ou conteúdo perigoso",
   "Vision": "Visão",
   "Vision capability is not enabled for Model {{model}}. Please enable it or set a default OCR model in <OpenSettingButton>Settings</OpenSettingButton>": "A capacidade de visão não está ativada para o Modelo {{model}}. Por favor, ative-a ou defina um modelo OCR predefinido em <OpenSettingButton>Definições</OpenSettingButton>",
