@@ -62,7 +62,7 @@ export const settingsStore = createStore<Settings & Action>()(
           },
           removeItem: async (name) => await storage.removeItem(name),
         })),
-        version: 2,
+        version: 3,
         partialize: (state) => {
           try {
             return SettingsSchema.parse(state)
@@ -88,6 +88,11 @@ export const settingsStore = createStore<Settings & Action>()(
               if (settings.licenseKey && !settings.licenseActivationMethod) {
                 settings.licenseActivationMethod = 'manual'
                 settings.memorizedManualLicenseKey = settings.licenseKey
+              }
+            case 2:
+              // Clear old default prompt "You are a helpful assistant" to use empty default
+              if (settings.defaultPrompt?.trim() === 'You are a helpful assistant.') {
+                settings.defaultPrompt = ''
               }
             default:
               break
