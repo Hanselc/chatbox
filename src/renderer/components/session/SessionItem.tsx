@@ -1,7 +1,7 @@
 import NiceModal from '@ebay/nice-modal-react'
-import { ActionIcon, Flex, Text } from '@mantine/core'
+import { ActionIcon, Flex, Menu, Text } from '@mantine/core'
 import type { SessionMeta } from '@shared/types'
-import { IconCopy, IconDots, IconEdit, IconStar, IconStarFilled, IconTrash } from '@tabler/icons-react'
+import { IconCopy, IconDots, IconEdit, IconFolder, IconStar, IconStarFilled, IconTrash } from '@tabler/icons-react'
 import clsx from 'clsx'
 import { memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -13,8 +13,10 @@ import {
   updateSession as updateSessionStore,
 } from '@/stores/chatStore'
 import { copyAndSwitchSession, switchCurrentSession } from '@/stores/sessionActions'
+import { useFolders } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
-import ActionMenu, { type ActionMenuItemProps } from '../ActionMenu'
+import { getEffectiveFolderId } from '@/utils/folder-utils'
+import type { ActionMenuItemProps } from '../ActionMenu'
 import { AssistantAvatar } from '../common/Avatar'
 import { ScalableIcon } from '../common/ScalableIcon'
 
@@ -26,6 +28,7 @@ export interface Props {
 function SessionItem(props: Props) {
   const { session, selected } = props
   const { t } = useTranslation()
+  const { folders } = useFolders()
   const setShowSidebar = useUIStore((s) => s.setShowSidebar)
   const onClick = () => {
     switchCurrentSession(session.id)
@@ -34,7 +37,6 @@ function SessionItem(props: Props) {
     }
   }
   const isSmallScreen = useIsSmallScreen()
-  // const smallSize = theme.typography.pxToRem(20)
 
   const [menuOpened, setMenuOpened] = useState(false)
 
@@ -68,32 +70,48 @@ function SessionItem(props: Props) {
           })
         },
       },
-      { divider: true },
-      {
-        doubleCheck: true,
-        text: t('Delete'),
-        icon: IconTrash,
-        onClick: async () => {
-          try {
-            await deleteSessionStore(session.id)
-            // Only navigate if deleting the currently selected session
-            if (selected) {
-              router.navigate({ to: '/', replace: true })
-            }
-          } catch (error) {
-            console.error('Failed to delete session:', error)
-          }
-        },
-      },
     ],
-    [session, selected, t]
+    [session, t]
   )
+
+  const deleteItem = useMemo<ActionMenuItemProps>(
+    () => ({
+      doubleCheck: true,
+      text: t('Delete'),
+      icon: IconTrash,
+      onClick: async () => {
+        try {
+          await deleteSessionStore(session.id)
+          if (selected) {
+            router.navigate({ to: '/', replace: true })
+          }
+        } catch (error) {
+          console.error('Failed to delete session:', error)
+        }
+      },
+    }),
+    [session, t]
+  )
+
+  const effectiveFolderId = useMemo(() => {
+    return getEffectiveFolderId(session, folders ?? [])
+  }, [session, folders])
+
+  const effectiveFolder = useMemo(() => {
+    return folders?.find((f) => f.id === effectiveFolderId)
+  }, [folders, effectiveFolderId])
+
+  const isInFolder = !!effectiveFolderId
+
+  // Get folder color for the left border (fallback to brand color)
+  const folderColor = effectiveFolder?.color || 'var(--chatbox-border-brand)'
 
   return (
     <Flex
       align="center"
       className={clsx(
-        'cursor-pointer rounded-sm group/session-item',
+        'cursor-pointer group/session-item',
+        isInFolder ? 'rounded-l-none rounded-r-sm' : 'rounded-sm',
         isSmallScreen
           ? ''
           : selected
@@ -102,9 +120,11 @@ function SessionItem(props: Props) {
       )}
       mx="xs"
       px="xs"
+      pl={isInFolder ? 'sm' : 'xs'}
       py={10}
       gap={10}
       onClick={onClick}
+      style={isInFolder ? { borderLeft: `3px solid ${folderColor}` } : undefined}
     >
       <AssistantAvatar
         avatarKey={session.assistantAvatarKey}
@@ -119,30 +139,68 @@ function SessionItem(props: Props) {
         {session.name}
       </Text>
 
-      <ActionMenu
-        type="desktop"
-        items={actionMenuItems}
-        position="bottom-start"
-        opened={menuOpened}
-        onChange={(opened) => setMenuOpened(opened)}
-      >
-        <ActionIcon
-          variant="transparent"
-          size={20}
-          color={session.starred ? 'chatbox-brand' : 'chatbox-tertiary'}
-          className={isSmallScreen || session.starred || menuOpened ? '' : 'group-hover/session-item:visible invisible'}
-          onClick={(event) => {
-            event.stopPropagation()
-            event.preventDefault()
-          }}
-        >
-          {session.starred ? (
-            <ScalableIcon icon={IconStarFilled} className="text-inherit" size={16} />
-          ) : (
-            <ScalableIcon icon={IconDots} className="text-inherit" size={16} />
-          )}
-        </ActionIcon>
-      </ActionMenu>
+      <Menu position="bottom-end" withinPortal opened={menuOpened} onChange={setMenuOpened}>
+        <Menu.Target>
+          <ActionIcon
+            variant="transparent"
+            size={20}
+            color={session.starred ? 'chatbox-brand' : 'chatbox-tertiary'}
+            className={isSmallScreen || session.starred || menuOpened ? '' : 'group-hover/session-item:visible invisible'}
+            onClick={(event) => {
+              event.stopPropagation()
+              event.preventDefault()
+            }}
+          >
+            {session.starred ? (
+              <ScalableIcon icon={IconStarFilled} className="text-inherit" size={16} />
+            ) : (
+              <ScalableIcon icon={IconDots} className="text-inherit" size={16} />
+            )}
+          </ActionIcon>
+        </Menu.Target>
+
+        <Menu.Dropdown miw={160} onClick={(e) => e.stopPropagation()}>
+          {actionMenuItems.map((item: any) => (
+            <Menu.Item
+              key={item.text}
+              leftSection={item.icon ? <item.icon size={14} /> : undefined}
+              onClick={item.onClick}
+            >
+              {item.text}
+            </Menu.Item>
+          ))}
+
+          <Menu.Divider />
+
+          <Menu.Item
+            leftSection={<IconFolder size={14} />}
+            onClick={() => {
+              void NiceModal.show('move-session-to-folder', { session })
+            }}
+          >
+            {t('Move to Folder')}
+          </Menu.Item>
+
+          <Menu.Divider />
+
+          <Menu.Item
+            color="chatbox-error"
+            leftSection={<IconTrash size={14} />}
+            onClick={async () => {
+              try {
+                await deleteSessionStore(session.id)
+                if (selected) {
+                  router.navigate({ to: '/', replace: true })
+                }
+              } catch (error) {
+                console.error('Failed to delete session:', error)
+              }
+            }}
+          >
+            {t('Delete')}
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
     </Flex>
   )
 }

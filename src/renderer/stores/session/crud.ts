@@ -1,31 +1,87 @@
 import { arrayMove } from '@dnd-kit/sortable'
-import { copyMessagesWithMapping, copyThreads, type Session, type SessionMeta } from '@shared/types'
+import { copyMessagesWithMapping, copyThreads, createMessage, type Session, type SessionMeta } from '@shared/types'
+import { getMessageText } from '@shared/utils/message'
 import { getDefaultStore } from 'jotai'
 import { omit } from 'lodash'
 import { router } from '@/router'
+import { buildCombinedInstruction } from '@/utils/system-instruction'
 import { sortSessions } from '@/utils/session-utils'
 import * as atoms from '../atoms'
 import * as chatStore from '../chatStore'
+import { getFolderById } from '../folderStore'
+import { settingsStore } from '../settingsStore'
 import * as scrollActions from '../scrollActions'
 import { initEmptyChatSession, initEmptyPictureSession } from '../sessionHelpers'
 
 /**
- * Create a new session and switch to it
+ * Build the single combined system instruction for a session before persisting.
  */
-async function create(newSession: Omit<Session, 'id'>) {
+async function _buildSessionSystemInstruction(session: Omit<Session, 'id'>): Promise<string> {
+  const settings = settingsStore.getState().getSettings()
+  const globalPrompt = settings.defaultPrompt?.trim() || ''
+
+  let folderInstruction = ''
+  let ignoreGlobal = false
+  if (session.folderId) {
+    const folder = await getFolderById(session.folderId)
+    if (folder) {
+      folderInstruction = folder.systemInstruction
+      ignoreGlobal = folder.ignoreOtherInstructions
+    }
+  }
+
+  return buildCombinedInstruction({
+    globalPrompt,
+    folderInstruction,
+    chatInstruction: session.systemInstruction?.trim() || '',
+    ignoreGlobal,
+  })
+}
+
+/**
+ * Create a new session. For chat sessions, builds the combined system
+ * instruction (global + folder + chat) and prepends it as a system message,
+ * preserving any existing system message text as part of the chat instruction.
+ * Picture sessions are left untouched.
+ */
+export async function create(newSession: Omit<Session, 'id'>) {
+  if (newSession.type === 'chat' || newSession.type === undefined) {
+    const nonSystemMessages = newSession.messages.filter((m) => m.role !== 'system')
+    const existingSystemTexts = newSession.messages
+      .filter((m) => m.role === 'system')
+      .map((m) => getMessageText(m))
+      .filter(Boolean)
+
+    const chatInstruction = [newSession.systemInstruction?.trim() || '', ...existingSystemTexts]
+      .filter(Boolean)
+      .join('\n\n---\n\n')
+
+    const combined = await _buildSessionSystemInstruction({
+      ...newSession,
+      systemInstruction: chatInstruction,
+    })
+
+    if (combined) {
+      const sysMsg = createMessage('system', combined)
+      sysMsg.timestamp = 0
+      newSession = { ...newSession, messages: [sysMsg, ...nonSystemMessages] }
+    } else {
+      newSession = { ...newSession, messages: nonSystemMessages }
+    }
+  }
+
   const session = await chatStore.createSession(newSession)
-  switchCurrentSession(session.id)
   return session
 }
 
 /**
- * Create a new empty session
+ * Create a new empty session and switch to it
  */
-export async function createEmpty(type: 'chat' | 'picture') {
+export async function createEmpty(type: 'chat' | 'picture', folderId?: string) {
   let newSession: Session
   switch (type) {
     case 'chat':
-      newSession = await create(initEmptyChatSession())
+      newSession = await create(initEmptyChatSession(folderId))
       break
     case 'picture':
       newSession = await create(initEmptyPictureSession())
@@ -33,6 +89,7 @@ export async function createEmpty(type: 'chat' | 'picture') {
     default:
       throw new Error(`Unknown session type: ${type}`)
   }
+  switchCurrentSession(newSession.id)
   return newSession
 }
 
@@ -113,18 +170,62 @@ export function switchCurrentSession(sessionId: string) {
 }
 
 /**
- * Reorder sessions in the list
+ * Reorder sessions within a specific folder context (or uncategorized).
+ * Only changes the relative order of sessions in the same context;
+ * sessions in other folders are left untouched.
+ *
+ * Updates sortOrder on the affected sessions so the new order is persisted
+ * independently of the raw array position.
  */
-export async function reorderSessions(oldIndex: number, newIndex: number) {
-  console.debug('sessionActions', 'reorderSessions', oldIndex, newIndex)
+export async function reorderSessionsInContext(
+  folderId: string | null,
+  oldIndex: number,
+  newIndex: number
+) {
+  console.debug('sessionActions', 'reorderSessionsInContext', { folderId, oldIndex, newIndex })
+
   await chatStore.updateSessionList((sessions) => {
     if (!sessions) {
       throw new Error('Session list not found')
     }
-    // sortSessions normalizes display order (pinned first, then reversed chronological)
-    // We must apply it both before arrayMove (to match UI indices) and after (to persist correct order)
-    const sortedSessions = sortSessions(sessions)
-    return sortSessions(arrayMove(sortedSessions, oldIndex, newIndex))
+
+    const isInContext = (s: SessionMeta) => {
+      if (s.hidden) return false
+      return folderId === null ? !s.folderId : s.folderId === folderId
+    }
+
+    // Build the sorted view of the target context (same as the UI)
+    const contextSessions = sortSessions(sessions.filter(isInContext))
+
+    if (
+      oldIndex < 0 ||
+      newIndex < 0 ||
+      oldIndex >= contextSessions.length ||
+      newIndex >= contextSessions.length
+    ) {
+      return sessions
+    }
+
+    // Reorder within the context
+    const reordered = arrayMove(contextSessions, oldIndex, newIndex)
+
+    // Recompute sortOrder values for the reordered context sessions.
+    // Higher sortOrder = earlier in the list (sortSessions sorts descending).
+    const base = Date.now() + 100000
+    const reorderedWithSortOrder = reordered.map((s, i) => ({
+      ...s,
+      sortOrder: base - i,
+    }))
+
+    // Replace context sessions in the full list, preserving everything else
+    const contextIds = new Set(reorderedWithSortOrder.map((s) => s.id))
+    let contextIdx = 0
+    return sessions.map((s) => {
+      if (contextIds.has(s.id)) {
+        return reorderedWithSortOrder[contextIdx++]!
+      }
+      return s
+    })
   })
 }
 

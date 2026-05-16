@@ -20,7 +20,7 @@ export {
   clearConversationList,
   copyAndSwitchSession,
   createEmpty,
-  reorderSessions,
+  reorderSessionsInContext,
   switchCurrentSession,
   switchToIndex,
   switchToNext,

@@ -27,18 +27,39 @@ export function migrateSession(session: Session): Session {
 }
 
 export function sortSessions(sessions: SessionMeta[]): SessionMeta[] {
-  const reversed: SessionMeta[] = []
-  const pinned: SessionMeta[] = []
-  for (const sess of sessions) {
-    // Skip hidden sessions (e.g., migrated picture sessions)
-    if (sess.hidden) {
-      continue
-    }
+  const valid = sessions.filter((s) => !s.hidden)
+
+  const pinnedWithOrder: SessionMeta[] = []
+  const pinnedWithoutOrder: SessionMeta[] = []
+  const reversedWithOrder: SessionMeta[] = []
+  const reversedWithoutOrder: SessionMeta[] = []
+
+  for (const sess of valid) {
     if (sess.starred) {
-      pinned.push(sess)
-      continue
+      if (sess.sortOrder !== undefined) {
+        pinnedWithOrder.push(sess)
+      } else {
+        pinnedWithoutOrder.push(sess)
+      }
+    } else {
+      if (sess.sortOrder !== undefined) {
+        reversedWithOrder.push(sess)
+      } else {
+        reversedWithoutOrder.push(sess)
+      }
     }
+  }
+
+  // Sort sessions that have sortOrder by descending value (higher = first in display)
+  const sortByOrderDesc = (a: SessionMeta, b: SessionMeta) => (b.sortOrder! - a.sortOrder!)
+  pinnedWithOrder.sort(sortByOrderDesc)
+  reversedWithOrder.sort(sortByOrderDesc)
+
+  // For sessions without sortOrder, preserve original reverse-array behavior
+  const reversed: SessionMeta[] = []
+  for (const sess of reversedWithoutOrder) {
     reversed.unshift(sess)
   }
-  return pinned.concat(reversed)
+
+  return pinnedWithOrder.concat(pinnedWithoutOrder, reversedWithOrder, reversed)
 }

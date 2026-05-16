@@ -3,6 +3,7 @@ import SwipeableDrawer from '@mui/material/SwipeableDrawer'
 import {
   IconCirclePlus,
   IconCode,
+  IconFolderPlus,
   IconHelpCircle,
   IconInfoCircle,
   IconLayoutSidebarLeftCollapse,
@@ -12,6 +13,7 @@ import {
 } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
 import clsx from 'clsx'
+import NiceModal from '@ebay/nice-modal-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Divider from './components/common/Divider'
@@ -231,6 +233,10 @@ export default function Sidebar() {
                 <Button variant="light" fullWidth data-testid="new-chat-button" onClick={handleCreateNewSession}>
                   <ScalableIcon icon={IconCirclePlus} className="mr-2" />
                   {t('New Chat')}
+                </Button>
+                <Button variant="light" fullWidth onClick={() => NiceModal.show('folder-settings')}>
+                  <ScalableIcon icon={IconFolderPlus} className="mr-2" />
+                  {t('New Folder')}
                 </Button>
                 <Button
                   variant="light"

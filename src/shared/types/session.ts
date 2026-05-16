@@ -268,6 +268,9 @@ export const SessionSchema = z.object({
   threadName: z.string().optional(),
   messageForksHash: z.record(z.string(), MessageForkSchema).optional(),
   compactionPoints: z.array(CompactionPointSchema).optional(),
+  folderId: z.string().optional(),
+  sortOrder: z.number().optional(),
+  systemInstruction: z.string().optional(),
 })
 
 export const SessionMetaSchema = SessionSchema.pick({
@@ -279,6 +282,8 @@ export const SessionMetaSchema = SessionSchema.pick({
   picUrl: true,
   backgroundImage: true,
   type: true,
+  folderId: true,
+  sortOrder: true,
 })
 
 export const SessionThreadBriefSchema = z.object({

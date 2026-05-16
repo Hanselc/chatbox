@@ -226,6 +226,7 @@ export type FileMeta = {
   size: number
 }
 
+export * from './types/folder'
 export * from './types/image-generation'
 export * from './types/session'
 export * from './types/settings'

@@ -73,9 +73,19 @@ export function useSessionList() {
 let sessionListUpdateQueue: UpdateQueue<SessionMeta[]> | null = null
 
 export async function updateSessionList(updater: UpdaterFn<SessionMeta[]>) {
+  // Optimistically update the React Query cache immediately so the UI
+  // doesn't flash back to the old order while the async queue persists.
+  const currentCache = queryClient.getQueryData<SessionMeta[]>(QueryKeys.ChatSessionsList)
+  if (currentCache) {
+    const optimisticResult = updater(currentCache)
+    queryClient.setQueryData(QueryKeys.ChatSessionsList, sortSessions(optimisticResult))
+  }
   if (!sessionListUpdateQueue) {
+    // Initialize queue with cache data if available, otherwise read from storage
+    // This prevents race conditions where stale storage data overwrites recent updates
+    const initialState = currentCache ?? (await _listSessionsMeta())
     sessionListUpdateQueue = new UpdateQueue<SessionMeta[]>(
-      () => _listSessionsMeta(),
+      initialState,
       async (sessions) => {
         await storage.setItemNow(StorageKey.ChatSessionsList, sessions)
       }
@@ -624,3 +634,4 @@ export async function recoverSessionList() {
 
   return { recovered: recoveredSessionMetas.length, failed: failedKeys.length }
 }
+
