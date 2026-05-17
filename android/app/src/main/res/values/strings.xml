@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Chatbox</string>
-    <string name="title_activity_main">Chatbox</string>
-    <string name="package_name">app.chatboxai.chatbox</string>
-    <string name="custom_url_scheme">app.chatboxai.chatbox</string>
+    <string name="app_name">Chatbox Custom</string>
+    <string name="title_activity_main">Chatbox Custom</string>
+    <string name="package_name">app.hanselc.chatboxcustom</string>
+    <string name="custom_url_scheme">app.hanselc.chatboxcustom</string>
 </resources>

@@ -1,4 +1,4 @@
-package app.chatboxai.chatbox;
+package app.hanselc.chatboxcustom;
 
 import static org.junit.Assert.*;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("app.chatboxai.chatbox", appContext.getPackageName());
+        assertEquals("app.hanselc.chatboxcustom", appContext.getPackageName());
     }
 }
