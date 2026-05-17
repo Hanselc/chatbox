@@ -1,3 +1,23 @@
+## ⚠️ Unofficial Fork & Disclaimer
+
+This repository is an independent, unofficial fork of the original [Chatbox](https://github.com/chatboxai/chatbox) project. 
+
+### Legal & Trademark Notice
+* **No Affiliation:** This project is not affiliated with, authorized, maintained, sponsored, or endorsed by the official Chatbox developers, Chatbox AI, or any of its affiliates.
+* **Trademarks:** "Chatbox" and all related names, logos, and brands are the property of their respective owners. The use of the name in this repository is strictly for identification and historical reference purposes to indicate the origin of the source code under the terms of the open-source license. This modified version is a completely distinct entity from the official software.
+* **Modifications:** This version has been customized for personal and community use.
+
+### Licensing Compliance
+This project fully complies with the **GNU General Public License v3.0 (GPL-3.0)**. In accordance with the license requirements:
+* All original copyright notices and credits have been strictly preserved.
+* The source code of all modifications remains 100% public and freely accessible within this repository.
+
+### Warranty & Liability Waiver
+This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability arising from, out of, or in connection with the software or the use of the software.
+
+
+----
+
 <p align="right">
   <a href="README.md">English</a> |
   <a href="./doc/README-CN.md">简体中文</a>

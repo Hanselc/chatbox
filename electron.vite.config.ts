@@ -195,6 +195,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     renderer: {
+      publicDir: path.resolve(__dirname, 'src/renderer/public'),
       resolve: {
         alias: {
           '@': path.resolve(__dirname, 'src/renderer'),

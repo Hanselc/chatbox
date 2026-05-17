@@ -1,4 +1,4 @@
-package app.chatboxai.chatbox;
+package app.hanselc.chatboxcustom;
 
 import static org.junit.Assert.*;
 
