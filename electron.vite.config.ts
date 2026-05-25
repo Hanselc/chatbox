@@ -289,7 +289,9 @@ export default defineConfig(({ mode }) => {
         },
         postcss: './postcss.config.cjs',
       },
+
       server: {
+        host: process.env.DEV_HOST || '127.0.0.1',
         port: Number(process.env.DEV_PORT) || 1212,
       },
       define: {
