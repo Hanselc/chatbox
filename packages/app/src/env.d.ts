@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_SENTRY_ENVIRONMENT?: string
   readonly VITE_SENTRY_RELEASE?: string
   readonly VITE_REMOTE_ONLY?: string
+  readonly VITE_NO_PERSIST_PASSWORDS?: string
 }
 
 interface ImportMeta {

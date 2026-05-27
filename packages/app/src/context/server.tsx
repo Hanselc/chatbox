@@ -1,5 +1,5 @@
 import { createSimpleContext } from "@opencode-ai/ui/context"
-import { type Accessor, batch, createMemo } from "solid-js"
+import { type Accessor, batch, createMemo, createSignal } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Persist, persisted } from "@/utils/persist"
 
@@ -129,6 +129,8 @@ export namespace ServerConnection {
 export const { use: useServer, provider: ServerProvider } = createSimpleContext({
   name: "Server",
   init: (props: { defaultServer?: ServerConnection.Key; servers?: Array<ServerConnection.Any> }) => {
+    const noPersistPasswords = import.meta.env.VITE_NO_PERSIST_PASSWORDS
+
     const [store, setStore, _, ready] = persisted(
       Persist.global("server", ["server.v3"]),
       createStore({
@@ -138,10 +140,20 @@ export const { use: useServer, provider: ServerProvider } = createSimpleContext(
       }),
     )
 
+    const [passwordMap, setPasswordMap] = createSignal(new Map<string, string>())
+
     const url = (x: StoredServer) => (typeof x === "string" ? x : "type" in x ? x.http.url : x.url)
 
     const allServers = createMemo((): Array<ServerConnection.Any> => {
-      return resolveServerList({ stored: store.list, props: props.servers })
+      const pw = passwordMap()
+      const resolved = resolveServerList({ stored: store.list, props: props.servers })
+      if (!noPersistPasswords) return resolved
+      return resolved.map((conn) => {
+        if (conn.type !== "http") return conn
+        const password = pw.get(conn.http.url)
+        if (!password) return conn
+        return { ...conn, http: { ...conn.http, password } }
+      })
     })
 
     const [state, setState] = createStore({
@@ -156,6 +168,16 @@ export const { use: useServer, provider: ServerProvider } = createSimpleContext(
       const url_ = normalizeServerUrl(input.http.url)
       if (!url_) return
       const conn: ServerConnection.Http = { ...input, authToken: undefined, http: { ...input.http, url: url_ } }
+      if (noPersistPasswords) {
+        const next = new Map(passwordMap())
+        if (conn.http.password) {
+          next.set(url_, conn.http.password)
+        } else {
+          next.delete(url_)
+        }
+        setPasswordMap(next)
+        conn.http.password = undefined
+      }
       return batch(() => {
         const existing = store.list.findIndex((x) => url(x) === url_)
         if (existing !== -1) {
@@ -171,6 +193,11 @@ export const { use: useServer, provider: ServerProvider } = createSimpleContext(
     function remove(key: ServerConnection.Key) {
       const list = store.list.filter((x) => url(x) !== key)
       batch(() => {
+        if (noPersistPasswords) {
+          const next = new Map(passwordMap())
+          next.delete(key)
+          setPasswordMap(next)
+        }
         setStore("list", list)
         if (state.active === key) {
           const next = list[0]

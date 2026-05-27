@@ -18,7 +18,7 @@ export function StatusPopover() {
   const servers = useServers()
   const sync = useSync()
   const [shown, setShown] = createSignal(false)
-  const ready = createMemo(() => servers.health[server.key]?.healthy === false || sync.data.mcp_ready)
+  const ready = createMemo(() => (server.key ? servers.health[server.key]?.healthy === false : false) || sync.data.mcp_ready)
   const mcpIssue = createMemo(() => {
     const mcp = Object.values(sync.data.mcp ?? {})
     const failed = mcp.some((item) => item.status === "failed" || item.status === "needs_client_registration")
@@ -26,8 +26,8 @@ export function StatusPopover() {
     if (failed) return "critical" as const
     if (warn) return "warning" as const
   })
-  const serverHealthy = () => servers.health[server.key]?.healthy === true
-  const healthy = createMemo(() => servers.health[server.key]?.healthy === true && !mcpIssue())
+  const serverHealthy = () => (server.key ? servers.health[server.key]?.healthy === true : undefined)
+  const healthy = createMemo(() => (server.key ? servers.health[server.key]?.healthy === true : false) && !mcpIssue())
 
   return (
     <Popover
@@ -85,7 +85,7 @@ function DirectoryStatusPopover() {
   const servers = useServers()
   const sync = useSync()
   const [shown, setShown] = createSignal(false)
-  const serverHealth = () => servers.health[server.key]?.healthy
+  const serverHealth = () => (server.key ? servers.health[server.key]?.healthy : undefined)
   const ready = createMemo(() => serverHealth() === false || sync.data.mcp_ready)
   const mcpIssue = createMemo(() => {
     const mcp = Object.values(sync.data.mcp ?? {})
@@ -118,7 +118,7 @@ function ServerStatusPopover() {
   const server = useServer()
   const servers = useServers()
   const [shown, setShown] = createSignal(false)
-  const serverHealth = () => servers.health[server.key]?.healthy
+  const serverHealth = () => (server.key ? servers.health[server.key]?.healthy : undefined)
   const state = createMemo<StatusPopoverState>(() => ({
     shown: shown(),
     ready: serverHealth() !== undefined,
