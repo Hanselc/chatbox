@@ -862,6 +862,7 @@ export const dict = {
   "app.server.unreachable": "Nije moguće pristupiti {{server}}",
   "app.server.retrying": "Automatski ponovni pokušaj...",
   "app.server.otherServers": "Drugi serveri",
+  "app.server.reconnect": "Ponovo poveži",
   "dialog.server.add.usernamePlaceholder": "korisničko ime",
   "dialog.server.add.passwordPlaceholder": "lozinka",
   "server.row.noUsername": "nema korisničkog imena",

@@ -294,10 +294,10 @@ function ReconnectForm(props: {
       />
       <div class="flex flex-col gap-2">
         <Button variant="primary" size="large" onClick={handleSubmit} disabled={busy()} class="px-3 py-1.5 w-full">
-          Reconnect
+          {language.t("app.server.reconnect")}
         </Button>
         <Button variant="ghost" size="large" onClick={props.onManageServers} class="px-3 py-1.5 w-full">
-          Manage servers
+          {language.t("status.popover.action.manageServers")}
         </Button>
       </div>
     </div>

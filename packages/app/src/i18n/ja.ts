@@ -781,6 +781,7 @@ export const dict = {
   "app.server.unreachable": "{{server}} に到達できませんでした",
   "app.server.retrying": "自動的に再試行中...",
   "app.server.otherServers": "その他のサーバー",
+  "app.server.reconnect": "再接続",
   "dialog.server.add.usernamePlaceholder": "ユーザー名",
   "dialog.server.add.passwordPlaceholder": "パスワード",
   "server.row.noUsername": "ユーザー名なし",
