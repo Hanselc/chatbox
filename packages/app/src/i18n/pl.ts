@@ -783,6 +783,7 @@ export const dict = {
   "app.server.unreachable": "Nie można połączyć z {{server}}",
   "app.server.retrying": "Ponawianie automatycznie...",
   "app.server.otherServers": "Inne serwery",
+  "app.server.reconnect": "Połącz ponownie",
   "dialog.server.add.usernamePlaceholder": "nazwa użytkownika",
   "dialog.server.add.passwordPlaceholder": "hasło",
   "server.row.noUsername": "brak nazwy użytkownika",

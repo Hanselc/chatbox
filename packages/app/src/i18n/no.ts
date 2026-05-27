@@ -863,6 +863,7 @@ export const dict = {
   "app.server.unreachable": "Kunne ikke nå {{server}}",
   "app.server.retrying": "Prøver på nytt automatisk...",
   "app.server.otherServers": "Andre servere",
+  "app.server.reconnect": "Koble til på nytt",
   "dialog.server.add.usernamePlaceholder": "brukernavn",
   "dialog.server.add.passwordPlaceholder": "passord",
   "server.row.noUsername": "inget brukernavn",

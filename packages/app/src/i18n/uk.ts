@@ -317,6 +317,7 @@ export const dict = {
   "app.server.unreachable": "Не вдалося досягти {{server}}",
   "app.server.retrying": "Автоматичне повторення...",
   "app.server.otherServers": "Інші сервери",
+  "app.server.reconnect": "Підключити знову",
 
   "dialog.server.title": "Сервери",
   "dialog.server.description": "Перемкніть сервер OpenCode, до якого підключається ця програма.",

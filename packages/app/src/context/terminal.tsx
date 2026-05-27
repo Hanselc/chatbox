@@ -389,6 +389,7 @@ export const { use: useTerminal, provider: TerminalProvider } = createSimpleCont
     const params = useParams()
     const cache = new Map<string, TerminalCacheEntry>()
     const scope = createMemo(() => {
+      if (!server.key) return ""
       return getTerminalServerScope(server.current, server.key)
     })
 

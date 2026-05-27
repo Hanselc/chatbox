@@ -775,6 +775,7 @@ export const dict = {
   "app.server.unreachable": "تعذر الوصول إلى {{server}}",
   "app.server.retrying": "جاري إعادة المحاولة تلقائيًا...",
   "app.server.otherServers": "خوادم أخرى",
+  "app.server.reconnect": "إعادة الاتصال",
   "dialog.server.add.usernamePlaceholder": "اسم المستخدم",
   "dialog.server.add.passwordPlaceholder": "كلمة المرور",
   "server.row.noUsername": "لا يوجد اسم مستخدم",
