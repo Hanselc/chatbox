@@ -4,9 +4,11 @@ import { I18nProvider } from "@opencode-ai/ui/context"
 import { DialogProvider, useDialog } from "@opencode-ai/ui/context/dialog"
 import { FileComponentProvider } from "@opencode-ai/ui/context/file"
 import { MarkedProvider } from "@opencode-ai/ui/context/marked"
+import { Button } from "@opencode-ai/ui/button"
 import { File } from "@opencode-ai/ui/file"
 import { Font } from "@opencode-ai/ui/font"
 import { Splash } from "@opencode-ai/ui/logo"
+import { TextField } from "@opencode-ai/ui/text-field"
 import { ThemeProvider } from "@opencode-ai/ui/theme/context"
 import { MetaProvider } from "@solidjs/meta"
 import { type BaseRouterProps, Navigate, Route, Router } from "@solidjs/router"
@@ -14,6 +16,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/solid-query"
 import { Effect } from "effect"
 import {
   type Component,
+  createEffect,
   createMemo,
   createResource,
   createSignal,
@@ -169,26 +172,38 @@ function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean }>) {
 
   const [checkMode, setCheckMode] = createSignal<"blocking" | "background">("blocking")
 
-  // performs repeated health check with a grace period for
-  // non-http connections, otherwise fails instantly
-  const [startupHealthCheck, healthCheckActions] = createResource(() =>
-    props.disableHealthCheck
-      ? true
-      : Effect.gen(function* () {
-          if (!server.current) return true
-          const { http, type } = server.current
+  const missingPassword = () => {
+    const current = server.current
+    if (!current || current.type !== "http") return false
+    return (
+      import.meta.env.VITE_NO_PERSIST_PASSWORDS && current.requiresPassword && !current.http.password
+    )
+  }
 
-          while (true) {
-            const res = yield* Effect.promise(() => checkServerHealth(http))
-            if (res.healthy) return true
-            if (checkMode() === "background" || type === "http") return false
-          }
-        }).pipe(
-          Effect.timeoutOrElse({ duration: "10 seconds", orElse: () => Effect.succeed(false) }),
-          Effect.ensuring(Effect.sync(() => setCheckMode("background"))),
-          Effect.runPromise,
-        ),
-  )
+  const [startupHealthCheck, healthCheckActions] = createResource(() => {
+    const current = server.current
+    return Effect.gen(function* () {
+      if (
+        import.meta.env.VITE_NO_PERSIST_PASSWORDS &&
+        current?.type === "http" &&
+        current.requiresPassword &&
+        !current.http.password
+      )
+        return false
+      if (props.disableHealthCheck) return true
+      if (!current) return true
+      const { http, type } = current
+      while (true) {
+        const res = yield* Effect.promise(() => checkServerHealth(http))
+        if (res.healthy) return true
+        if (checkMode() === "background" || type === "http") return false
+      }
+    }).pipe(
+      Effect.timeoutOrElse({ duration: "10 seconds", orElse: () => Effect.succeed(false) }),
+      Effect.ensuring(Effect.sync(() => setCheckMode("background"))),
+      Effect.runPromise,
+    )
+  })
 
   return (
     <Suspense
@@ -229,48 +244,137 @@ function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean }>) {
   )
 }
 
+function ReconnectForm(props: {
+  server: ServerConnection.Http
+  onConnect: (password: string) => void
+  onManageServers: () => void
+}) {
+  const language = useLanguage()
+  const checkServerHealth = useCheckServerHealth()
+  const [password, setPassword] = createSignal("")
+  const [error, setError] = createSignal("")
+  const [busy, setBusy] = createSignal(false)
+
+  const handleSubmit = async () => {
+    setError("")
+    setBusy(true)
+    const pw = password()
+    try {
+      const result = await checkServerHealth({ ...props.server.http, password: pw })
+      if (!result.healthy) {
+        setError(language.t("dialog.server.add.error"))
+        return
+      }
+      props.onConnect(pw)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== "Enter" || e.isComposing) return
+    e.preventDefault()
+    handleSubmit()
+  }
+
+  return (
+    <div class="flex flex-col gap-4 w-full max-w-sm">
+      <p class="text-14-regular text-text-base text-center">{serverName(props.server)}</p>
+      <TextField
+        type="password"
+        label={language.t("dialog.server.add.password")}
+        placeholder={language.t("dialog.server.add.passwordPlaceholder")}
+        value={password()}
+        autofocus
+        validationState={error() ? "invalid" : "valid"}
+        error={error()}
+        disabled={busy()}
+        onChange={setPassword}
+        onKeyDown={handleKeyDown}
+      />
+      <div class="flex flex-col gap-2">
+        <Button variant="primary" size="large" onClick={handleSubmit} disabled={busy()} class="px-3 py-1.5 w-full">
+          Reconnect
+        </Button>
+        <Button variant="ghost" size="large" onClick={props.onManageServers} class="px-3 py-1.5 w-full">
+          Manage servers
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 function ConnectionError(props: { onRetry?: () => void; onServerSelected?: (key: ServerConnection.Key) => void }) {
   const language = useLanguage()
   const server = useServer()
+  const dialog = useDialog()
   const others = () => server.list.filter((s) => ServerConnection.key(s) !== server.key)
   const name = createMemo(() => server.name || server.key)
   const serverToken = "\u0000server\u0000"
   const unreachable = createMemo(() => language.t("app.server.unreachable", { server: serverToken }).split(serverToken))
 
-  const timer = setInterval(() => props.onRetry?.(), 1000)
-  onCleanup(() => clearInterval(timer))
+  const needsReconnect = () => {
+    const current = server.current
+    if (!current || current.type !== "http") return false
+    return current.requiresPassword && !current.http.password
+  }
+
+  createEffect(() => {
+    if (needsReconnect()) return
+    const timer = setInterval(() => props.onRetry?.(), 1000)
+    onCleanup(() => clearInterval(timer))
+  })
 
   return (
     <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base gap-6 p-6">
-      <div class="flex flex-col items-center max-w-md text-center">
+      <Show
+        when={needsReconnect()}
+        fallback={
+          <>
+            <div class="flex flex-col items-center max-w-md text-center">
+              <Splash class="w-12 h-15 mb-4" />
+              <p class="text-14-regular text-text-base">
+                {unreachable()[0]}
+                <span class="text-text-strong font-medium">{name()}</span>
+                {unreachable()[1]}
+              </p>
+              <p class="mt-1 text-12-regular text-text-weak">{language.t("app.server.retrying")}</p>
+            </div>
+            <Show when={others().length > 0}>
+              <div class="flex flex-col gap-2 w-full max-w-sm">
+                <span class="text-12-regular text-text-base text-center">{language.t("app.server.otherServers")}</span>
+                <div class="flex flex-col gap-1 bg-surface-base rounded-lg p-2">
+                  <For each={others()}>
+                    {(conn) => {
+                      const key = ServerConnection.key(conn)
+                      return (
+                        <button
+                          type="button"
+                          class="flex items-center gap-3 w-full px-3 py-2 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"
+                          onClick={() => props.onServerSelected?.(key)}
+                        >
+                          <span class="text-14-regular text-text-strong truncate">{serverName(conn)}</span>
+                        </button>
+                      )
+                    }}
+                  </For>
+                </div>
+              </div>
+            </Show>
+          </>
+        }
+      >
         <Splash class="w-12 h-15 mb-4" />
-        <p class="text-14-regular text-text-base">
-          {unreachable()[0]}
-          <span class="text-text-strong font-medium">{name()}</span>
-          {unreachable()[1]}
-        </p>
-        <p class="mt-1 text-12-regular text-text-weak">{language.t("app.server.retrying")}</p>
-      </div>
-      <Show when={others().length > 0}>
-        <div class="flex flex-col gap-2 w-full max-w-sm">
-          <span class="text-12-regular text-text-base text-center">{language.t("app.server.otherServers")}</span>
-          <div class="flex flex-col gap-1 bg-surface-base rounded-lg p-2">
-            <For each={others()}>
-              {(conn) => {
-                const key = ServerConnection.key(conn)
-                return (
-                  <button
-                    type="button"
-                    class="flex items-center gap-3 w-full px-3 py-2 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"
-                    onClick={() => props.onServerSelected?.(key)}
-                  >
-                    <span class="text-14-regular text-text-strong truncate">{serverName(conn)}</span>
-                  </button>
-                )
-              }}
-            </For>
-          </div>
-        </div>
+        <ReconnectForm
+          server={server.current as ServerConnection.Http}
+          onConnect={(password) => {
+            const current = server.current
+            if (!current || current.type !== "http") return
+            server.add({ ...current, http: { ...current.http, password } })
+            props.onRetry?.()
+          }}
+          onManageServers={() => dialog.show(() => <DialogSelectServer />)}
+        />
       </Show>
     </div>
   )

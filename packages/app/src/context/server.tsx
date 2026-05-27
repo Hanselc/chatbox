@@ -80,6 +80,7 @@ export namespace ServerConnection {
     type: "http"
     http: HttpBase
     authToken?: boolean
+    requiresPassword?: boolean
   } & Base
 
   export type Sidecar = {
@@ -172,8 +173,10 @@ export const { use: useServer, provider: ServerProvider } = createSimpleContext(
         const next = new Map(passwordMap())
         if (conn.http.password) {
           next.set(url_, conn.http.password)
+          conn.requiresPassword = true
         } else {
           next.delete(url_)
+          conn.requiresPassword = false
         }
         setPasswordMap(next)
         conn.http.password = undefined

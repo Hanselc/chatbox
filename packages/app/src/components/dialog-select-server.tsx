@@ -172,7 +172,12 @@ function ServerForm(props: ServerFormProps) {
 }
 
 export function DialogSelectServer() {
-  const navigate = useNavigate()
+  let navigate: ReturnType<typeof useNavigate>
+  try {
+    navigate = useNavigate()
+  } catch {
+    navigate = () => {}
+  }
   const dialog = useDialog()
   const server = useServer()
   const platform = usePlatform()
@@ -271,6 +276,7 @@ export function DialogSelectServer() {
         password === input.original.http.password
       ) {
         resetEdit()
+        dialog.close()
         return
       }
 
@@ -291,6 +297,7 @@ export function DialogSelectServer() {
       }
 
       resetEdit()
+      dialog.close()
     },
   }))
 
@@ -350,7 +357,6 @@ export function DialogSelectServer() {
   })
 
   async function select(conn: ServerConnection.Any, persist?: boolean) {
-    if (!persist && store.status[ServerConnection.key(conn)]?.healthy === false) return
     dialog.close()
     if (persist && conn.type === "http") {
       server.add(conn)
