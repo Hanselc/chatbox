@@ -4,14 +4,12 @@ description: Merge dev branch into current branch with intelligent conflict reso
 
 Merge the "dev" branch from origin into the current branch with smart conflict resolution.
 
-> ⚠️ **CRITICAL SAFETY RULE**: This command NEVER auto-commits. All changes remain staged for manual review before committing.
-
 This command will:
 1. Fetch the latest dev branch from origin
 2. Attempt to merge it into the current branch
 3. Auto-resolve easy conflicts (lock files, generated files)
 4. Present guided choices for complex conflicts in your custom files
-5. Stage all changes but **NEVER auto-commit**
+5. Stage all changes
 6. Run typecheck to verify the merge
 
 ## Steps
@@ -120,16 +118,8 @@ Show the final merge status:
 
 !`git diff --staged --stat`
 
-**Merge complete - changes are staged but NOT committed.**
-
-You must manually commit when ready:
-```bash
-git commit -m "Merge branch 'dev' into $(git branch --show-current)"
-```
-
 ## Important Notes
 
-- > ☠️ **NEVER AUTO-COMMIT**: Changes remain staged for your review. You MUST manually run `git commit` yourself.
 - **Manual intervention**: If the merge fails catastrophically, you can abort with `git merge --abort`
 - **Guided choices**: For conflicts in your custom features, I'll ask you how to resolve them
 - **Type checking**: The merge isn't considered complete until typecheck passes
