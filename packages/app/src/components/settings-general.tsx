@@ -802,9 +802,7 @@ export const SettingsGeneral: Component = () => {
 
         <DisplaySection />
 
-        <Show when={desktop() && import.meta.env.VITE_OPENCODE_CHANNEL !== "prod"}>
-          <AdvancedSection />
-        </Show>
+        <AdvancedSection />
       </div>
     </div>
   )
@@ -818,7 +816,7 @@ interface SettingsRowProps {
 
 const SettingsRow: Component<SettingsRowProps> = (props) => {
   return (
-    <div class="flex flex-wrap items-center gap-4 py-3 border-b border-border-weak-base last:border-none sm:flex-nowrap">
+    <div class="settings-row flex flex-wrap items-center gap-4 py-3 border-b border-border-weak-base last:border-none sm:flex-nowrap">
       <div class="flex min-w-0 flex-1 flex-col gap-0.5">
         <span class="text-14-medium text-text-strong">{props.title}</span>
         <span class="text-12-regular text-text-weak">{props.description}</span>
