@@ -356,7 +356,7 @@ function HomeProjectColumn(props: {
                   </div>
                 </button>
                 <IconButtonV2
-                  class="absolute right-1 inset-y-1 opacity-0 group-hover:opacity-100"
+                  class="absolute right-1 inset-y-1 sm:opacity-0 sm:group-hover:opacity-100"
                   name="out"
                   variant="ghost-muted"
                   size="small"
