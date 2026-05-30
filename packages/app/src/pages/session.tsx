@@ -451,34 +451,6 @@ export default function Page() {
   })
   const mobileChanges = createMemo(() => !isDesktop() && store.mobileTab === "changes")
   const mobileFiles = createMemo(() => !isDesktop() && store.mobileTab === "files")
-  const mobileDiffFiles = createMemo(() => reviewDiffs().map((d) => d.file).filter((f): f is string => typeof f === "string"))
-  const mobileDiffKinds = createMemo(() => {
-    const merge = (a: "add" | "del" | "mix" | undefined, b: "add" | "del" | "mix") => {
-      if (!a) return b
-      if (a === b) return a
-      return "mix" as const
-    }
-    const normalize = (p: string) => p.replaceAll("\\\\", "/").replace(/\/+$/, "")
-    const out = new Map<string, "add" | "del" | "mix">()
-    for (const diff of reviewDiffs()) {
-      if (!diff.file) continue
-      const file = normalize(diff.file)
-      const kind = diff.status === "added" ? "add" : diff.status === "deleted" ? "del" : "mix"
-      out.set(file, kind)
-      const parts = file.split("/")
-      for (const [idx] of parts.slice(0, -1).entries()) {
-        const dir = parts.slice(0, idx + 1).join("/")
-        if (!dir) continue
-        out.set(dir, merge(out.get(dir), kind))
-      }
-    }
-    return out
-  })
-  const mobileNofiles = createMemo(() => {
-    const state = file.tree.state("")
-    if (!state?.loaded) return false
-    return file.tree.children("").length === 0
-  })
   const wantsReview = createMemo(() =>
     isDesktop()
       ? desktopFileTreeOpen() || (desktopReviewOpen() && activeTab() === "review")
@@ -520,6 +492,34 @@ export default function Page() {
   }
   const reviewCount = () => reviewDiffs().length
   const hasReview = () => reviewCount() > 0
+  const mobileDiffFiles = createMemo(() => reviewDiffs().map((d) => d.file).filter((f): f is string => typeof f === "string"))
+  const mobileDiffKinds = createMemo(() => {
+    const merge = (a: "add" | "del" | "mix" | undefined, b: "add" | "del" | "mix") => {
+      if (!a) return b
+      if (a === b) return a
+      return "mix" as const
+    }
+    const normalize = (p: string) => p.replaceAll("\\\\", "/").replace(/\/+$/, "")
+    const out = new Map<string, "add" | "del" | "mix">()
+    for (const diff of reviewDiffs()) {
+      if (!diff.file) continue
+      const file = normalize(diff.file)
+      const kind = diff.status === "added" ? "add" : diff.status === "deleted" ? "del" : "mix"
+      out.set(file, kind)
+      const parts = file.split("/")
+      for (const [idx] of parts.slice(0, -1).entries()) {
+        const dir = parts.slice(0, idx + 1).join("/")
+        if (!dir) continue
+        out.set(dir, merge(out.get(dir), kind))
+      }
+    }
+    return out
+  })
+  const mobileNofiles = createMemo(() => {
+    const state = file.tree.state("")
+    if (!state?.loaded) return false
+    return file.tree.children("").length === 0
+  })
   const reviewReady = () => {
     if (store.changes === "git" || store.changes === "branch") return !vcsQuery.isPending
     return true
