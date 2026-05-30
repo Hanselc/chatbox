@@ -1708,6 +1708,7 @@ export default function Page() {
       onSubmit={() => {
         comments.clear()
         resumeScroll()
+        if (!isDesktop()) setStore("mobileTab", "session")
       }}
       onResponseSubmit={resumeScroll}
       followup={
