@@ -397,46 +397,6 @@ export default function Page() {
     mobileWordWrap: false as boolean,
   })
 
-  // Inject word-wrap styles into file viewer shadow DOM when toggled on mobile
-  const WORD_WRAP_STYLE_ID = "mobile-word-wrap-style"
-  const WORD_WRAP_CSS = `
-    [data-slot="line-content"],
-    [data-slot="line"],
-    .line {
-      white-space: pre-wrap !important;
-      word-break: break-all !important;
-      overflow-wrap: anywhere !important;
-    }
-    [data-component="file"][data-mode="text"] {
-      overflow: visible !important;
-    }
-  `
-  createEffect(() => {
-    const wrap = store.mobileWordWrap
-    const container = mobileFileRef
-    if (!container) return
-    // Use requestAnimationFrame to ensure shadow DOM is rendered
-    requestAnimationFrame(() => {
-      const fileEl = container.querySelector('[data-component="file"]')
-      if (!fileEl) return
-      const host = fileEl.querySelector("diffs-container")
-      if (!(host instanceof HTMLElement)) return
-      const root = host.shadowRoot
-      if (!root) return
-      if (wrap) {
-        if (!root.getElementById(WORD_WRAP_STYLE_ID)) {
-          const style = document.createElement("style")
-          style.id = WORD_WRAP_STYLE_ID
-          style.textContent = WORD_WRAP_CSS
-          root.appendChild(style)
-        }
-      } else {
-        const existing = root.getElementById(WORD_WRAP_STYLE_ID)
-        if (existing) existing.remove()
-      }
-    })
-  })
-
   const [followup, setFollowup] = persisted(
     Persist.workspace(sdk.directory, "followup", ["followup.v1"]),
     createStore<{
@@ -681,6 +641,17 @@ export default function Page() {
 
   let inputRef!: HTMLDivElement
   let mobileFileRef: HTMLDivElement | undefined
+
+  const mobileWordWrapCSS = `
+    [data-slot="line-content"],
+    [data-slot="line"],
+    .line {
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+    }
+  `
+  const mobileUnsafeCSS = createMemo(() => store.mobileWordWrap ? mobileWordWrapCSS : "")
   let promptDock: HTMLDivElement | undefined
   let dockHeight = 0
   let scroller: HTMLDivElement | undefined
@@ -1887,7 +1858,8 @@ export default function Page() {
                                     contents: file.get(store.mobileFilePath!)?.content?.content ?? "",
                                     cacheKey: sampledChecksum(file.get(store.mobileFilePath!)?.content?.content ?? ""),
                                   }}
-                                  class={"select-text" + (store.mobileWordWrap ? " mobile-word-wrap" : "")}
+                                  unsafeCSS={mobileUnsafeCSS()}
+                                  class="select-text"
                                 />
                               </div>
                             </ScrollView>
