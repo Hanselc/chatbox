@@ -1870,7 +1870,7 @@ export default function Page() {
                               tabs().open(tab)
                               tabs().setActive(tab)
                               void file.load(node.path)
-                              openReviewPanel()
+                              setStore("mobileTab", "session")
                             }}
                           />
                         </Match>
