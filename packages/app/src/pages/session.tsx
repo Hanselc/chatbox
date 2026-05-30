@@ -188,45 +188,13 @@ function createSessionHistoryLoader(input: SessionHistoryWindowInput) {
   }
 }
 
-function MobileFileViewer(props: { path: string }) {
-  const file = useFile()
-  const fileComponent = useFileComponent()
-  const language = useLanguage()
-  const state = createMemo(() => file.get(props.path))
-  const contents = createMemo(() => state()?.content?.content ?? "")
-  const cacheKey = createMemo(() => sampledChecksum(contents()))
-
-  return (
-    <ScrollView class="h-full">
-      <Switch>
-        <Match when={state()?.loaded}>
-          <div class="relative overflow-hidden pb-40">
-            <Dynamic
-              component={fileComponent}
-              mode="text"
-              file={{
-                name: props.path,
-                contents: contents(),
-                cacheKey: cacheKey(),
-              }}
-              class="select-text"
-            />
-          </div>
-        </Match>
-        <Match when={state()?.loading}>
-          <div class="px-6 py-4 text-text-weak">{language.t("common.loading")}...</div>
-        </Match>
-        <Match when={state()?.error}>{(err) => <div class="px-6 py-4 text-text-weak">{err()}</div>}</Match>
-      </Switch>
-    </ScrollView>
-  )
-}
 
 export default function Page() {
   const serverSync = useServerSync()
   const layout = useLayout()
   const local = useLocal()
   const file = useFile()
+  const fileComponent = useFileComponent()
   const sync = useSync()
   const queryClient = useQueryClient()
   const dialog = useDialog()
@@ -1856,7 +1824,30 @@ export default function Page() {
                         </span>
                       </div>
                       <div class="flex-1 min-h-0 overflow-hidden">
-                        <MobileFileViewer path={store.mobileFilePath!} />
+                        <Switch>
+                          <Match when={file.get(store.mobileFilePath!)?.loaded}>
+                            <ScrollView class="h-full">
+                              <div class="relative overflow-hidden pb-40">
+                                <Dynamic
+                                  component={fileComponent}
+                                  mode="text"
+                                  file={{
+                                    name: store.mobileFilePath!,
+                                    contents: file.get(store.mobileFilePath!)?.content?.content ?? "",
+                                    cacheKey: sampledChecksum(file.get(store.mobileFilePath!)?.content?.content ?? ""),
+                                  }}
+                                  class="select-text"
+                                />
+                              </div>
+                            </ScrollView>
+                          </Match>
+                          <Match when={file.get(store.mobileFilePath!)?.loading}>
+                            <div class="px-6 py-4 text-text-weak">{language.t("common.loading")}...</div>
+                          </Match>
+                          <Match when={file.get(store.mobileFilePath!)?.error}>
+                            <div class="px-6 py-4 text-text-weak">{file.get(store.mobileFilePath!)?.error}</div>
+                          </Match>
+                        </Switch>
                       </div>
                     </div>
                   </Match>
