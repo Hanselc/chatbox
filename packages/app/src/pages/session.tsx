@@ -25,11 +25,17 @@ import { createStore } from "solid-js/store"
 import { ResizeHandle } from "@opencode-ai/ui/resize-handle"
 import { Select } from "@opencode-ai/ui/select"
 import { Tabs } from "@opencode-ai/ui/tabs"
-import { createAutoScroll } from "@opencode-ai/ui/hooks"
+import { useFileComponent } from "@opencode-ai/ui/context/file"
+import { Dynamic } from "solid-js/web"
+import { ScrollView } from "@opencode-ai/ui/scroll-view"
+import {
+  createAutoScroll,
+} from "@opencode-ai/ui/hooks"
 import { previewSelectedLines } from "@opencode-ai/ui/pierre/selection-bridge"
 import { Button } from "@opencode-ai/ui/button"
+import { IconButton } from "@opencode-ai/ui/icon-button"
 import { showToast } from "@opencode-ai/ui/toast"
-import { checksum } from "@opencode-ai/core/util/encode"
+import { checksum, sampledChecksum } from "@opencode-ai/core/util/encode"
 import { useLocation, useSearchParams } from "@solidjs/router"
 import { NewSessionDesignView, NewSessionView, SessionHeader } from "@/components/session"
 import FileTree from "@/components/file-tree"
@@ -180,6 +186,40 @@ function createSessionHistoryLoader(input: SessionHistoryWindowInput) {
     loadAndReveal,
     onScrollerScroll,
   }
+}
+
+function MobileFileViewer(props: { path: string }) {
+  const file = useFile()
+  const fileComponent = useFileComponent()
+  const language = useLanguage()
+  const state = createMemo(() => file.get(props.path))
+  const contents = createMemo(() => state()?.content?.content ?? "")
+  const cacheKey = createMemo(() => sampledChecksum(contents()))
+
+  return (
+    <ScrollView class="h-full">
+      <Switch>
+        <Match when={state()?.loaded}>
+          <div class="relative overflow-hidden pb-40">
+            <Dynamic
+              component={fileComponent}
+              mode="text"
+              file={{
+                name: props.path,
+                contents: contents(),
+                cacheKey: cacheKey(),
+              }}
+              class="select-text"
+            />
+          </div>
+        </Match>
+        <Match when={state()?.loading}>
+          <div class="px-6 py-4 text-text-weak">{language.t("common.loading")}...</div>
+        </Match>
+        <Match when={state()?.error}>{(err) => <div class="px-6 py-4 text-text-weak">{err()}</div>}</Match>
+      </Switch>
+    </ScrollView>
+  )
 }
 
 export default function Page() {
@@ -384,6 +424,7 @@ export default function Page() {
     changes: "git" as ChangeMode,
     newSessionWorktree: "main",
     deferRender: false,
+    mobileFilePath: undefined as string | undefined,
   })
 
   const [followup, setFollowup] = persisted(
@@ -1802,82 +1843,101 @@ export default function Page() {
                 </div>
               </Match>
               <Match when={params.id && mobileFiles()}>
-                <div class="relative h-full overflow-hidden bg-background-stronger">
-                  <Tabs
-                    variant="pill"
-                    value={fileTreeTab()}
-                    onChange={(value) => {
-                      if (value !== "changes" && value !== "all") return
-                      setFileTreeTab(value)
-                    }}
-                    class="h-full"
-                    data-scope="filetree"
-                  >
-                    <Tabs.List>
-                      <Tabs.Trigger value="changes" class="flex-1" classes={{ button: "w-full" }}>
-                        {reviewCount()}{" "}
-                        {language.t(
-                          reviewCount() === 1 ? "session.review.change.one" : "session.review.change.other",
-                        )}
-                      </Tabs.Trigger>
-                      <Tabs.Trigger value="all" class="flex-1" classes={{ button: "w-full" }}>
-                        {language.t("session.files.all")}
-                      </Tabs.Trigger>
-                    </Tabs.List>
-                    <Tabs.Content value="changes" class="bg-background-stronger px-3 py-0">
-                      <Switch>
-                        <Match when={hasReview() || !reviewReady()}>
-                          <Show
-                            when={reviewReady()}
-                            fallback={
-                              <div class="px-2 py-2 text-12-regular text-text-weak">
-                                {language.t("common.loading")}
-                                {language.t("common.loading.ellipsis")}
+                <Switch>
+                  <Match when={store.mobileFilePath}>
+                    <div class="relative h-full overflow-hidden bg-background-stronger flex flex-col">
+                      <div class="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-border-base">
+                        <IconButton
+                          icon="chevron-left"
+                          variant="ghost"
+                          size="small"
+                          onClick={() => setStore("mobileFilePath", undefined)}
+                        />
+                        <span class="text-14-medium text-text-strong truncate">
+                          {store.mobileFilePath}
+                        </span>
+                      </div>
+                      <div class="flex-1 min-h-0 overflow-hidden">
+                        <MobileFileViewer path={store.mobileFilePath!} />
+                      </div>
+                    </div>
+                  </Match>
+                  <Match when={true}>
+                    <div class="relative h-full overflow-hidden bg-background-stronger">
+                      <Tabs
+                        variant="pill"
+                        value={fileTreeTab()}
+                        onChange={(value) => {
+                          if (value !== "changes" && value !== "all") return
+                          setFileTreeTab(value)
+                        }}
+                        class="h-full"
+                        data-scope="filetree"
+                      >
+                        <Tabs.List>
+                          <Tabs.Trigger value="changes" class="flex-1" classes={{ button: "w-full" }}>
+                            {reviewCount()}{" "}
+                            {language.t(
+                              reviewCount() === 1 ? "session.review.change.one" : "session.review.change.other",
+                            )}
+                          </Tabs.Trigger>
+                          <Tabs.Trigger value="all" class="flex-1" classes={{ button: "w-full" }}>
+                            {language.t("session.files.all")}
+                          </Tabs.Trigger>
+                        </Tabs.List>
+                        <Tabs.Content value="changes" class="bg-background-stronger px-3 py-0">
+                          <Switch>
+                            <Match when={hasReview() || !reviewReady()}>
+                              <Show
+                                when={reviewReady()}
+                                fallback={
+                                  <div class="px-2 py-2 text-12-regular text-text-weak">
+                                    {language.t("common.loading")}
+                                    {language.t("common.loading.ellipsis")}
+                                  </div>
+                                }
+                              >
+                                <FileTree
+                                  path=""
+                                  class="pt-3"
+                                  allowed={mobileDiffFiles()}
+                                  kinds={mobileDiffKinds()}
+                                  draggable={false}
+                                  active={tree.activeDiff}
+                                  onFileClick={(node) => focusReviewDiff(node.path)}
+                                />
+                              </Show>
+                            </Match>
+                          </Switch>
+                        </Tabs.Content>
+                        <Tabs.Content value="all" class="bg-background-stronger px-3 py-0">
+                          <Switch>
+                            <Match when={mobileNofiles()}>
+                              <div class="h-full flex flex-col">
+                                <div class="h-6 shrink-0" aria-hidden />
+                                <div class="flex-1 pb-64 flex items-center justify-center text-center">
+                                  <div class="text-12-regular text-text-weak">{language.t("session.files.empty")}</div>
+                                </div>
                               </div>
-                            }
-                          >
-                            <FileTree
-                              path=""
-                              class="pt-3"
-                              allowed={mobileDiffFiles()}
-                              kinds={mobileDiffKinds()}
-                              draggable={false}
-                              active={tree.activeDiff}
-                              onFileClick={(node) => focusReviewDiff(node.path)}
-                            />
-                          </Show>
-                        </Match>
-                      </Switch>
-                    </Tabs.Content>
-                    <Tabs.Content value="all" class="bg-background-stronger px-3 py-0">
-                      <Switch>
-                        <Match when={mobileNofiles()}>
-                          <div class="h-full flex flex-col">
-                            <div class="h-6 shrink-0" aria-hidden />
-                            <div class="flex-1 pb-64 flex items-center justify-center text-center">
-                              <div class="text-12-regular text-text-weak">{language.t("session.files.empty")}</div>
-                            </div>
-                          </div>
-                        </Match>
-                        <Match when={true}>
-                          <FileTree
-                            path=""
-                            class="pt-3"
-                            modified={mobileDiffFiles()}
-                            kinds={mobileDiffKinds()}
-                            onFileClick={(node) => {
-                              const tab = file.tab(node.path)
-                              tabs().open(tab)
-                              tabs().setActive(tab)
-                              void file.load(node.path)
-                              setStore("mobileTab", "session")
-                            }}
-                          />
-                        </Match>
-                      </Switch>
-                    </Tabs.Content>
-                  </Tabs>
-                </div>
+                            </Match>
+                            <Match when={true}>
+                              <FileTree
+                                path=""
+                                class="pt-3"
+                                modified={mobileDiffFiles()}
+                                kinds={mobileDiffKinds()}
+                                onFileClick={(node) => {
+                                  setStore("mobileFilePath", node.path)
+                                  void file.load(node.path)
+                                }}
+                              />
+                            </Match>
+                          </Switch>
+                        </Tabs.Content>
+                      </Tabs>
+                    </div>
+                  </Match>
+                </Switch>
               </Match>
               <Match when={params.id}>
                 <Show when={messagesReady()}>
