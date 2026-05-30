@@ -543,7 +543,7 @@ export const dict = {
   "session.tab.context": "Context",
   "session.tab.files": "Files",
   "session.panel.reviewAndFiles": "Review and files",
-  "session.review.filesChanged": "{{count}} Files Changed",
+  "session.review.filesChanged": "Changes",
   "session.review.change.one": "Change",
   "session.review.change.other": "Changes",
   "session.review.loadingChanges": "Loading changes...",

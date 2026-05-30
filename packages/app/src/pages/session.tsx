@@ -1799,9 +1799,7 @@ export default function Page() {
                 classes={{ button: "w-full" }}
                 onClick={() => setStore("mobileTab", "changes")}
               >
-                {hasReview()
-                  ? language.t("session.review.filesChanged", { count: reviewCount() })
-                  : language.t("session.review.change.other")}
+                {language.t("session.review.change.other")}
               </Tabs.Trigger>
               <Tabs.Trigger
                 value="files"
@@ -1864,77 +1862,28 @@ export default function Page() {
                   </Match>
                   <Match when={true}>
                     <div class="relative h-full overflow-hidden bg-background-stronger">
-                      <Tabs
-                        variant="pill"
-                        value={fileTreeTab()}
-                        onChange={(value) => {
-                          if (value !== "changes" && value !== "all") return
-                          setFileTreeTab(value)
-                        }}
-                        class="h-full"
-                        data-scope="filetree"
-                      >
-                        <Tabs.List>
-                          <Tabs.Trigger value="changes" class="flex-1" classes={{ button: "w-full" }}>
-                            {reviewCount()}{" "}
-                            {language.t(
-                              reviewCount() === 1 ? "session.review.change.one" : "session.review.change.other",
-                            )}
-                          </Tabs.Trigger>
-                          <Tabs.Trigger value="all" class="flex-1" classes={{ button: "w-full" }}>
-                            {language.t("session.files.all")}
-                          </Tabs.Trigger>
-                        </Tabs.List>
-                        <Tabs.Content value="changes" class="bg-background-stronger px-3 py-0">
-                          <Switch>
-                            <Match when={hasReview() || !reviewReady()}>
-                              <Show
-                                when={reviewReady()}
-                                fallback={
-                                  <div class="px-2 py-2 text-12-regular text-text-weak">
-                                    {language.t("common.loading")}
-                                    {language.t("common.loading.ellipsis")}
-                                  </div>
-                                }
-                              >
-                                <FileTree
-                                  path=""
-                                  class="pt-3"
-                                  allowed={mobileDiffFiles()}
-                                  kinds={mobileDiffKinds()}
-                                  draggable={false}
-                                  active={tree.activeDiff}
-                                  onFileClick={(node) => focusReviewDiff(node.path)}
-                                />
-                              </Show>
-                            </Match>
-                          </Switch>
-                        </Tabs.Content>
-                        <Tabs.Content value="all" class="bg-background-stronger px-3 py-0">
-                          <Switch>
-                            <Match when={mobileNofiles()}>
-                              <div class="h-full flex flex-col">
-                                <div class="h-6 shrink-0" aria-hidden />
-                                <div class="flex-1 pb-64 flex items-center justify-center text-center">
-                                  <div class="text-12-regular text-text-weak">{language.t("session.files.empty")}</div>
-                                </div>
-                              </div>
-                            </Match>
-                            <Match when={true}>
-                              <FileTree
-                                path=""
-                                class="pt-3"
-                                modified={mobileDiffFiles()}
-                                kinds={mobileDiffKinds()}
-                                onFileClick={(node) => {
-                                  setStore("mobileFilePath", node.path)
-                                  void file.load(node.path)
-                                }}
-                              />
-                            </Match>
-                          </Switch>
-                        </Tabs.Content>
-                      </Tabs>
+                      <Switch>
+                        <Match when={mobileNofiles()}>
+                          <div class="h-full flex flex-col">
+                            <div class="h-6 shrink-0" aria-hidden />
+                            <div class="flex-1 pb-64 flex items-center justify-center text-center">
+                              <div class="text-12-regular text-text-weak">{language.t("session.files.empty")}</div>
+                            </div>
+                          </div>
+                        </Match>
+                        <Match when={true}>
+                          <FileTree
+                            path=""
+                            class="pt-3"
+                            modified={mobileDiffFiles()}
+                            kinds={mobileDiffKinds()}
+                            onFileClick={(node) => {
+                              setStore("mobileFilePath", node.path)
+                              void file.load(node.path)
+                            }}
+                          />
+                        </Match>
+                      </Switch>
                     </div>
                   </Match>
                 </Switch>
