@@ -34,7 +34,6 @@ import {
 import { previewSelectedLines } from "@opencode-ai/ui/pierre/selection-bridge"
 import { Button } from "@opencode-ai/ui/button"
 import { IconButton } from "@opencode-ai/ui/icon-button"
-import { Switch as ToggleSwitch } from "@opencode-ai/ui/switch"
 import { showToast } from "@opencode-ai/ui/toast"
 import { checksum, sampledChecksum } from "@opencode-ai/core/util/encode"
 import { useLocation, useSearchParams } from "@solidjs/router"
@@ -394,7 +393,7 @@ export default function Page() {
     newSessionWorktree: "main",
     deferRender: false,
     mobileFilePath: undefined as string | undefined,
-    mobileWordWrap: false as boolean,
+
   })
 
   const [followup, setFollowup] = persisted(
@@ -640,18 +639,7 @@ export default function Page() {
   }
 
   let inputRef!: HTMLDivElement
-  let mobileFileRef: HTMLDivElement | undefined
 
-  const mobileWordWrapCSS = `
-    [data-slot="line-content"],
-    [data-slot="line"],
-    .line {
-      white-space: pre-wrap !important;
-      word-break: break-all !important;
-      overflow-wrap: anywhere !important;
-    }
-  `
-  const mobileUnsafeCSS = createMemo(() => store.mobileWordWrap ? mobileWordWrapCSS : "")
   let promptDock: HTMLDivElement | undefined
   let dockHeight = 0
   let scroller: HTMLDivElement | undefined
@@ -1837,19 +1825,12 @@ export default function Page() {
                         <span class="text-14-medium text-text-strong truncate">
                           {store.mobileFilePath}
                         </span>
-                        <div class="ml-auto flex items-center gap-1.5">
-                          <span class="text-12-regular text-text-weak">Wrap</span>
-                          <ToggleSwitch
-                            checked={store.mobileWordWrap}
-                            onChange={(checked) => setStore("mobileWordWrap", checked)}
-                          />
-                        </div>
                       </div>
                       <div class="flex-1 min-h-0 overflow-hidden">
                         <Switch>
                           <Match when={file.get(store.mobileFilePath!)?.loaded}>
                             <ScrollView class="h-full">
-                              <div ref={mobileFileRef} class="relative overflow-hidden pb-40">
+                              <div class="relative overflow-hidden pb-40">
                                 <Dynamic
                                   component={fileComponent}
                                   mode="text"
@@ -1858,7 +1839,6 @@ export default function Page() {
                                     contents: file.get(store.mobileFilePath!)?.content?.content ?? "",
                                     cacheKey: sampledChecksum(file.get(store.mobileFilePath!)?.content?.content ?? ""),
                                   }}
-                                  unsafeCSS={mobileUnsafeCSS()}
                                   class="select-text"
                                 />
                               </div>
