@@ -153,6 +153,12 @@
     }
   }
 
+  @media (max-width: 767px) {
+    [data-slot="session-review-view-button"] {
+      display: none !important;
+    }
+  }
+
   [data-slot="accordion-trigger"]:hover [data-slot="session-review-view-button"] {
     opacity: 1;
   }

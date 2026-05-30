@@ -1,3 +1,17 @@
+[data-component="file"].mobile-word-wrap {
+  .shiki {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .shiki .line {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
+  }
+}
+
 [data-component="file"] {
   content-visibility: auto;
 }

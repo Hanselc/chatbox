@@ -1836,7 +1836,7 @@ export default function Page() {
                         <Switch>
                           <Match when={file.get(store.mobileFilePath!)?.loaded}>
                             <ScrollView class="h-full">
-                              <div class="relative overflow-hidden pb-40" style={store.mobileWordWrap ? { "white-space": "pre-wrap", "word-break": "break-all", "overflow-wrap": "anywhere" } : undefined}>
+                              <div class="relative overflow-hidden pb-40">
                                 <Dynamic
                                   component={fileComponent}
                                   mode="text"
@@ -1845,7 +1845,7 @@ export default function Page() {
                                     contents: file.get(store.mobileFilePath!)?.content?.content ?? "",
                                     cacheKey: sampledChecksum(file.get(store.mobileFilePath!)?.content?.content ?? ""),
                                   }}
-                                  class="select-text"
+                                  class={"select-text" + (store.mobileWordWrap ? " mobile-word-wrap" : "")}
                                 />
                               </div>
                             </ScrollView>
