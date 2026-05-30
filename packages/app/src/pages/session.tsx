@@ -32,6 +32,7 @@ import { showToast } from "@opencode-ai/ui/toast"
 import { checksum } from "@opencode-ai/core/util/encode"
 import { useLocation, useSearchParams } from "@solidjs/router"
 import { NewSessionDesignView, NewSessionView, SessionHeader } from "@/components/session"
+import FileTree from "@/components/file-tree"
 import { useComments } from "@/context/comments"
 import { getSessionPrefetch, SESSION_PREFETCH_TTL } from "@/context/global-sync/session-prefetch"
 import { useServerSync } from "@/context/server-sync"
@@ -379,7 +380,7 @@ export default function Page() {
 
   const [store, setStore] = createStore({
     messageId: undefined as string | undefined,
-    mobileTab: "session" as "session" | "changes",
+    mobileTab: "session" as "session" | "changes" | "files",
     changes: "git" as ChangeMode,
     newSessionWorktree: "main",
     deferRender: false,
@@ -449,6 +450,35 @@ export default function Page() {
     return list
   })
   const mobileChanges = createMemo(() => !isDesktop() && store.mobileTab === "changes")
+  const mobileFiles = createMemo(() => !isDesktop() && store.mobileTab === "files")
+  const mobileDiffFiles = createMemo(() => reviewDiffs().map((d) => d.file).filter((f): f is string => typeof f === "string"))
+  const mobileDiffKinds = createMemo(() => {
+    const merge = (a: "add" | "del" | "mix" | undefined, b: "add" | "del" | "mix") => {
+      if (!a) return b
+      if (a === b) return a
+      return "mix" as const
+    }
+    const normalize = (p: string) => p.replaceAll("\\\\", "/").replace(/\/+$/, "")
+    const out = new Map<string, "add" | "del" | "mix">()
+    for (const diff of reviewDiffs()) {
+      if (!diff.file) continue
+      const file = normalize(diff.file)
+      const kind = diff.status === "added" ? "add" : diff.status === "deleted" ? "del" : "mix"
+      out.set(file, kind)
+      const parts = file.split("/")
+      for (const [idx] of parts.slice(0, -1).entries()) {
+        const dir = parts.slice(0, idx + 1).join("/")
+        if (!dir) continue
+        out.set(dir, merge(out.get(dir), kind))
+      }
+    }
+    return out
+  })
+  const mobileNofiles = createMemo(() => {
+    const state = file.tree.state("")
+    if (!state?.loaded) return false
+    return file.tree.children("").length === 0
+  })
   const wantsReview = createMemo(() =>
     isDesktop()
       ? desktopFileTreeOpen() || (desktopReviewOpen() && activeTab() === "review")
@@ -1716,7 +1746,7 @@ export default function Page() {
             <Tabs.List>
               <Tabs.Trigger
                 value="session"
-                class="!w-1/2 !max-w-none"
+                class="!w-1/3 !max-w-none"
                 classes={{ button: "w-full" }}
                 onClick={() => setStore("mobileTab", "session")}
               >
@@ -1724,13 +1754,21 @@ export default function Page() {
               </Tabs.Trigger>
               <Tabs.Trigger
                 value="changes"
-                class="!w-1/2 !max-w-none !border-r-0"
+                class="!w-1/3 !max-w-none"
                 classes={{ button: "w-full" }}
                 onClick={() => setStore("mobileTab", "changes")}
               >
                 {hasReview()
                   ? language.t("session.review.filesChanged", { count: reviewCount() })
                   : language.t("session.review.change.other")}
+              </Tabs.Trigger>
+              <Tabs.Trigger
+                value="files"
+                class="!w-1/3 !max-w-none !border-r-0"
+                classes={{ button: "w-full" }}
+                onClick={() => setStore("mobileTab", "files")}
+              >
+                {language.t("session.tab.files")}
               </Tabs.Trigger>
             </Tabs.List>
           </Tabs>
@@ -1761,6 +1799,84 @@ export default function Page() {
                     loadingClass: "px-4 py-4 text-text-weak",
                     emptyClass: "h-full pb-64 -mt-4 flex flex-col items-center justify-center text-center gap-6",
                   })}
+                </div>
+              </Match>
+              <Match when={params.id && mobileFiles()}>
+                <div class="relative h-full overflow-hidden bg-background-stronger">
+                  <Tabs
+                    variant="pill"
+                    value={fileTreeTab()}
+                    onChange={(value) => {
+                      if (value !== "changes" && value !== "all") return
+                      setFileTreeTab(value)
+                    }}
+                    class="h-full"
+                    data-scope="filetree"
+                  >
+                    <Tabs.List>
+                      <Tabs.Trigger value="changes" class="flex-1" classes={{ button: "w-full" }}>
+                        {reviewCount()}{" "}
+                        {language.t(
+                          reviewCount() === 1 ? "session.review.change.one" : "session.review.change.other",
+                        )}
+                      </Tabs.Trigger>
+                      <Tabs.Trigger value="all" class="flex-1" classes={{ button: "w-full" }}>
+                        {language.t("session.files.all")}
+                      </Tabs.Trigger>
+                    </Tabs.List>
+                    <Tabs.Content value="changes" class="bg-background-stronger px-3 py-0">
+                      <Switch>
+                        <Match when={hasReview() || !reviewReady()}>
+                          <Show
+                            when={reviewReady()}
+                            fallback={
+                              <div class="px-2 py-2 text-12-regular text-text-weak">
+                                {language.t("common.loading")}
+                                {language.t("common.loading.ellipsis")}
+                              </div>
+                            }
+                          >
+                            <FileTree
+                              path=""
+                              class="pt-3"
+                              allowed={mobileDiffFiles()}
+                              kinds={mobileDiffKinds()}
+                              draggable={false}
+                              active={tree.activeDiff}
+                              onFileClick={(node) => focusReviewDiff(node.path)}
+                            />
+                          </Show>
+                        </Match>
+                      </Switch>
+                    </Tabs.Content>
+                    <Tabs.Content value="all" class="bg-background-stronger px-3 py-0">
+                      <Switch>
+                        <Match when={mobileNofiles()}>
+                          <div class="h-full flex flex-col">
+                            <div class="h-6 shrink-0" aria-hidden />
+                            <div class="flex-1 pb-64 flex items-center justify-center text-center">
+                              <div class="text-12-regular text-text-weak">{language.t("session.files.empty")}</div>
+                            </div>
+                          </div>
+                        </Match>
+                        <Match when={true}>
+                          <FileTree
+                            path=""
+                            class="pt-3"
+                            modified={mobileDiffFiles()}
+                            kinds={mobileDiffKinds()}
+                            onFileClick={(node) => {
+                              const tab = file.tab(node.path)
+                              tabs().open(tab)
+                              tabs().setActive(tab)
+                              void file.load(node.path)
+                              openReviewPanel()
+                            }}
+                          />
+                        </Match>
+                      </Switch>
+                    </Tabs.Content>
+                  </Tabs>
                 </div>
               </Match>
               <Match when={params.id}>
