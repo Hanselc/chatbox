@@ -34,6 +34,7 @@ import {
 import { previewSelectedLines } from "@opencode-ai/ui/pierre/selection-bridge"
 import { Button } from "@opencode-ai/ui/button"
 import { IconButton } from "@opencode-ai/ui/icon-button"
+import { Switch as ToggleSwitch } from "@opencode-ai/ui/switch"
 import { showToast } from "@opencode-ai/ui/toast"
 import { checksum, sampledChecksum } from "@opencode-ai/core/util/encode"
 import { useLocation, useSearchParams } from "@solidjs/router"
@@ -393,6 +394,7 @@ export default function Page() {
     newSessionWorktree: "main",
     deferRender: false,
     mobileFilePath: undefined as string | undefined,
+    mobileWordWrap: false as boolean,
   })
 
   const [followup, setFollowup] = persisted(
@@ -1822,12 +1824,19 @@ export default function Page() {
                         <span class="text-14-medium text-text-strong truncate">
                           {store.mobileFilePath}
                         </span>
+                        <div class="ml-auto flex items-center gap-1.5">
+                          <span class="text-12-regular text-text-weak">Wrap</span>
+                          <ToggleSwitch
+                            checked={store.mobileWordWrap}
+                            onChange={(checked) => setStore("mobileWordWrap", checked)}
+                          />
+                        </div>
                       </div>
                       <div class="flex-1 min-h-0 overflow-hidden">
                         <Switch>
                           <Match when={file.get(store.mobileFilePath!)?.loaded}>
                             <ScrollView class="h-full">
-                              <div class="relative overflow-hidden pb-40">
+                              <div class="relative overflow-hidden pb-40" style={store.mobileWordWrap ? { "white-space": "pre-wrap", "word-break": "break-all", "overflow-wrap": "anywhere" } : undefined}>
                                 <Dynamic
                                   component={fileComponent}
                                   mode="text"
