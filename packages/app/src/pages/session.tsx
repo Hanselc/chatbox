@@ -397,6 +397,40 @@ export default function Page() {
     mobileWordWrap: false as boolean,
   })
 
+  // Inject word-wrap styles into file viewer shadow DOM when toggled on mobile
+  const WORD_WRAP_STYLE_ID = "mobile-word-wrap-style"
+  createEffect(() => {
+    const wrap = store.mobileWordWrap
+    const container = mobileFileRef
+    if (!container) return
+    const host = container.querySelector("diffs-container")
+    if (!(host instanceof HTMLElement)) return
+    const root = host.shadowRoot
+    if (!root) return
+    if (wrap) {
+      if (!root.getElementById(WORD_WRAP_STYLE_ID)) {
+        const style = document.createElement("style")
+        style.id = WORD_WRAP_STYLE_ID
+        style.textContent = `
+          [data-slot="line-content"],
+          [data-slot="line"],
+          .line {
+            white-space: pre-wrap !important;
+            word-break: break-all !important;
+            overflow-wrap: anywhere !important;
+          }
+          [data-component="file"][data-mode="text"] {
+            overflow: visible !important;
+          }
+        `
+        root.appendChild(style)
+      }
+    } else {
+      const existing = root.getElementById(WORD_WRAP_STYLE_ID)
+      if (existing) existing.remove()
+    }
+  })
+
   const [followup, setFollowup] = persisted(
     Persist.workspace(sdk.directory, "followup", ["followup.v1"]),
     createStore<{
@@ -640,6 +674,7 @@ export default function Page() {
   }
 
   let inputRef!: HTMLDivElement
+  let mobileFileRef: HTMLDivElement | undefined
   let promptDock: HTMLDivElement | undefined
   let dockHeight = 0
   let scroller: HTMLDivElement | undefined
@@ -1837,7 +1872,7 @@ export default function Page() {
                         <Switch>
                           <Match when={file.get(store.mobileFilePath!)?.loaded}>
                             <ScrollView class="h-full">
-                              <div class="relative overflow-hidden pb-40">
+                              <div ref={mobileFileRef} class="relative overflow-hidden pb-40">
                                 <Dynamic
                                   component={fileComponent}
                                   mode="text"
